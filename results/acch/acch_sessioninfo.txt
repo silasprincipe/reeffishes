@@ -1,0 +1,69 @@
+
+ ============= 
+ 
+ Research info 
+ 
+
+    Author: Silas C. Principe | silasprincipe@usp.br 
+
+    Co-authors: Tito M.C. Lotufo | André L. Acosta 
+
+    Modelling of reef fishes 
+
+    This work is part of a PhD project being held at the Oceanographic Institute - USP 
+ 
+ Settings used in the modeling: 
+    Integration strategy: eb 
+    Number of samplings prediction: 100 
+    Number of samplings CV: 100 
+    Number of inlabru iterations: 4 
+    Number of inlabru iterations on CV: 4 
+
+ ============= 
+ 
+ Session info 
+ 
+R version 4.2.0 (2022-04-22 ucrt)
+Platform: x86_64-w64-mingw32/x64 (64-bit)
+Running under: Windows 10 x64 (build 22000)
+
+Matrix products: default
+
+locale:
+[1] LC_COLLATE=Portuguese_Brazil.utf8  LC_CTYPE=Portuguese_Brazil.utf8    LC_MONETARY=Portuguese_Brazil.utf8
+[4] LC_NUMERIC=C                       LC_TIME=Portuguese_Brazil.utf8    
+
+attached base packages:
+[1] parallel  stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+ [1] fields_13.3       viridis_0.6.2     viridisLite_0.4.0 spam_2.8-0        fs_1.5.2          patchwork_1.1.1   ggplot2_3.3.6    
+ [8] raster_3.5-29     inlabru_2.5.3     INLA_22.10.07     sp_1.5-0          foreach_1.5.2     Matrix_1.4-1     
+
+loaded via a namespace (and not attached):
+ [1] tidyselect_1.1.2       terra_1.6-17           purrr_0.3.4            splines_4.2.0          lattice_0.20-45       
+ [6] colorspace_2.0-3       vctrs_0.4.1            generics_0.1.2         stats4_4.2.0           utf8_1.2.2            
+[11] rlang_1.0.2            pillar_1.7.0           sn_2.0.2               glue_1.6.2             withr_2.5.0           
+[16] DBI_1.1.2              lifecycle_1.0.1        plyr_1.8.7             rgeos_0.5-9            MatrixModels_0.5-0    
+[21] dotCall64_1.0-1        munsell_0.5.0          gtable_0.3.0           codetools_0.2-18       labeling_0.4.2        
+[26] fansi_1.0.3            Rcpp_1.0.8.3           scales_1.2.0           tmvnsim_1.0-2          farver_2.1.0          
+[31] Deriv_4.1.3            gridExtra_2.3          mnormt_2.0.2           digest_0.6.29          dplyr_1.0.9           
+[36] numDeriv_2016.8-1.1    grid_4.2.0             rgdal_1.5-32           cli_3.3.0              tools_4.2.0           
+[41] magrittr_2.0.3         maps_3.4.0             PresenceAbsence_1.1.10 tibble_3.1.7           crayon_1.5.1          
+[46] pkgconfig_2.0.3        ellipsis_0.3.2         rstudioapi_0.13        assertthat_0.2.1       iterators_1.0.14      
+[51] R6_2.5.1               compiler_4.2.0        
+
+ ============= 
+ 
+ INLA info 
+ 
+	R-INLA version ..........: 22.10.07
+	Date ....................: Fri Oct 7 02:10:17 PM +03 2022 (Version_22.10.07)
+	Maintainers .............: Havard Rue <hrue@r-inla.org>
+	                         : Finn Lindgren <finn.lindgren@gmail.com>
+	                         : Elias Teixeira Krainski <elias@r-inla.org>
+	Main web-page ...........: www.r-inla.org
+	Download-page ...........: inla.r-inla-download.org
+	Repository ..............: github.com/hrue/r-inla
+	Email support ...........: help@r-inla.org
+	                         : r-inla-discussion-group@googlegroups.com

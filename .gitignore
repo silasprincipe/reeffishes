@@ -47,3 +47,24 @@ po/*~
 
 # RStudio Connect folder
 rsconnect/
+
+# Folders with large environmental data
+/data/env/*
+!/data/env/crop_layers
+!/data/env/fut_layers
+!/data/env/bath_layers
+/data/gis/*
+
+# Large bath layer (original GEBCO)
+/data/env/bath_layers/gebco_america_africa.tif
+
+# Folders with drafts
+/other_codes/
+/other_data/
+/codes/exploratorio/
+
+# Large environmental data files
+.nc
+
+# Other files
+.xml
