@@ -10,20 +10,21 @@ dup.cells <- function(data, env) {
   
   #Put 1 in presence cells
   for (i in 1:nrow(data)) {
-    r[cellFromXY(r, data@coords[i,])] <- ifelse(
-      is.na(r[cellFromXY(r, data@coords[i,])]),
+    r[terra::cellFromXY(r, matrix(data@coords[i,], ncol = 2))] <- unlist(ifelse(
+      is.na(r[terra::cellFromXY(r, matrix(data@coords[i,], ncol = 2))]),
       data$presence[i],
-      r[cellFromXY(r, data@coords[i,])] + data$presence[i])
+      r[terra::cellFromXY(r, matrix(data@coords[i,], ncol = 2))] + data$presence[i]))
   }
   
   r[r > 1] <- 1
   
   #Convert raster to dataframe
-  data <- rasterToPoints(r)
+  data <- as.points(r, values=TRUE, na.rm=TRUE, na.all=FALSE)
+  data <- as.data.frame(data, geom = "XY")
   
   data <- SpatialPointsDataFrame(
-    data[,1:2], data.frame(presence = data[,3]),
-    proj4string = crs(env)
+    data[,2:3], data.frame(presence = data[,1]),
+    proj4string = CRS(crs(env, proj = T))
   )
   
   data
@@ -47,18 +48,43 @@ plot.res <- function(var = NULL, # Which variable to plot
       na.value = "#572701", name = "Value")
   }
   
-  if (is.null(var)) {
-    p <- ggplot()+gg(obj, aes(fill = eval(parse(text = metric))))+
-      sca(obj[[metric]])+
-      coord_equal(ylim = ylim, xlim = xlim)
+  if (metric != "iqr") {
+    if (is.null(var)) {
+      p <- ggplot()+gg(obj, aes(fill = eval(parse(text = metric))))+
+        sca(obj[[metric]])+
+        coord_equal(ylim = ylim, xlim = xlim)
+    } else{
+      p <- ggplot()+gg(obj[[var]], aes(fill = eval(parse(text = metric))))+
+        sca(obj[[var]][[metric]])+
+        coord_equal(ylim = ylim, xlim = xlim)
+    }
+    if (po) {p <- p+gg(po.pts, color = "red", size = .5)}
+    if (ab) {p <- p+gg(ab.pts, color = "blue", aes(size = abundance), alpha = .1)}
+    if (pa) {p <- p+gg(pa.pts, aes(color = as.factor(presence)))}
   } else{
-    p <- ggplot()+gg(obj[[var]], aes(fill = eval(parse(text = metric))))+
-      sca(obj[[var]][[metric]])+
-      coord_equal(ylim = ylim, xlim = xlim)
+   
+    
+    if (is.null(var)) {
+      vals <- c(obj[["q0.025"]], obj[["mean"]], obj[["q0.975"]])
+    } else {
+      vals <- c(obj[[var]][["q0.025"]], obj[[var]][["mean"]], obj[[var]][["q0.975"]])
+    }
+    
+    n.obj <- as.data.frame(obj[[var]][c("q0.025", "mean", "q0.975")])
+    n.obj <- tidyr::pivot_longer(n.obj, cols = 1:3, names_to = "metric",
+                                 values_to = "value")
+    
+    p <- ggplot(n.obj)+
+      geom_tile(aes(x = x, y = y, fill = value))+
+      sca(vals)+
+      coord_equal(ylim = ylim, xlim = xlim) +
+      facet_wrap(~metric)
+    
+    if (po) {p <- p+gg(po.pts, color = "red", size = .5)}
+    if (ab) {p <- p+gg(ab.pts, color = "blue", aes(size = abundance), alpha = .1)}
+    if (pa) {p <- p+gg(pa.pts, aes(color = as.factor(presence)))}
+    
   }
-  if (po) {p <- p+gg(po.pts, color = "red", size = .5)}
-  if (ab) {p <- p+gg(ab.pts, color = "blue", aes(size = abundance), alpha = .1)}
-  if (pa) {p <- p+gg(pa.pts, aes(color = as.factor(presence)))}
   p
 }
 
@@ -113,15 +139,15 @@ plot.subset <- function(var = NULL, # vector of predictions to plot,
 # Plot temperature SPDE
 plot.temp <- function(x, knots = TRUE, tr = NULL, mode = "d1"){
   dat <- data.frame(
-    x = round(x$summary.random$tempmax$ID, 2),
-    mean = x$summary.random$tempmax$mean,
-    up = x$summary.random$tempmax$`0.975quant`,
-    lo = x$summary.random$tempmax$`0.025quant`
+    x = round(x$summary.random[[1]]$ID, 2),
+    mean = x$summary.random[[1]]$mean,
+    up = x$summary.random[[1]]$`0.975quant`,
+    lo = x$summary.random[[1]]$`0.025quant`
   )
   
   if (mode == "d1") {
     if (knots) {
-      dat$x <- d1mesh.st$mid
+      dat$x <- round(d1mesh.st$mid, 2)
     }
   }
   
@@ -220,4 +246,20 @@ delta.metrics <- function(df, metric, all = F){
   
   return(df)
   
+}
+
+
+# Check if all data is valid in the extended dataset
+check.extend <- function(data.po, data.pa, data.ips, lays){
+  po <- all(!is.na(extract(lays, coordinates(data.po))[,1]))
+  pa <- all(!is.na(extract(lays, coordinates(data.pa))[,1]))
+  ip <- all(!is.na(extract(lays, coordinates(data.ips))[,1]))
+  
+  if (all(c(po, pa, ip))) {
+    cat("All ok! \n")
+    return(invisible(NULL))
+  } else {
+    warning("One of the data have problems! \n")
+    return(c("PO", "PA", "IPS")[!c(po, pa, ip)])
+  }
 }

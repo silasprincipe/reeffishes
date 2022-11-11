@@ -155,7 +155,7 @@ plot_map_leaflet(obis.data$mybo)
 
 # Ensure all points are on water / inside study area
 # First we load a base layer
-base <- raster("data/env/crop_layers/BO22_tempmax_ss.tif")
+base <- raster("data/env/crop_layers/tempmax.tif")
 
 # Then we create a function that will see if points fall inside the area
 # and return only those

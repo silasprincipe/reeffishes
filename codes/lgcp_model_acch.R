@@ -10,19 +10,22 @@
 library(INLA)
 library(inlabru)
 # Spatial data
+library(terra)
+library(sp)
 library(raster)
 # Plotting and utilities
 library(ggplot2)
 library(patchwork)
 library(fs)
 source("functions/auxiliary_lgcp.R")
+source("functions/response_curves.R")
 # Settings
 set.seed(2932) # Replicability of sampling
 spatt <- theme_classic() # Theme for better ploting
 nsamp <- 100 # Define number of sampling for the final predictions
 nsampcv <- 100 # Define number of sampling in the CV predictions
-itnumb <- 4 # Define number of maximum inlabru iterations
-itnumbcv <- 4 # Define number of maximum inlabru iterations in cross-validation
+itnumb <- 20 # Define number of maximum inlabru iterations
+itnumbcv <- 1 # Define number of maximum inlabru iterations in cross-validation
 intest <- "eb" # Integration strategy
 
 # Species (each one is modeled separately)
@@ -34,20 +37,17 @@ sp <- "acch"
 # Data prepared with the 'lgcp_prepare_data.R' code
 dat <- readRDS("data/lgcp_data.rds")
 mesh <- dat$mesh
-env.e <- as(dat$env.e, "SpatialPixelsDataFrame")
 starea <- dat$starea
 rm(dat)
 
+##### Load environmental data ----
+source("codes/lgcp_load_env_data.R")
+
 # Get integration points
 ips <- ipoints(starea, mesh)
-# Transform from m2 to km2 to ensure numerical stability
-ips$weight <- ips$weight / 1e6
+
 # Plot mesh and integration points
 ggplot()+gg(mesh)+gg(ips)+coord_fixed()+spatt
-
-
-# Load environmental data ----
-source("codes/lgcp_load_env_data.R")
 
 
 
@@ -55,7 +55,7 @@ source("codes/lgcp_load_env_data.R")
 ##### Presence only dataset ----
 po.pts <- read.csv(paste0("data/", sp, "/", sp, "_final.csv"))
 po.pts <- SpatialPoints(po.pts[, c("decimalLongitude", "decimalLatitude")],
-                        proj4string = crs(env))
+                        proj4string = CRS(crs(env.e, proj = T)))
 
 po.pts <- remove.duplicates(po.pts, zero = 5)
 
@@ -66,13 +66,13 @@ coordnames(po.pts) <- c("x", "y")
 pa.pts <- read.csv(paste0("data/", sp, "/", sp, "_pa.csv"))
 pa.pts <- SpatialPointsDataFrame(pa.pts[, c("decimalLongitude", "decimalLatitude")],
                                  data.frame("presence" = pa.pts[,3]),
-                                 proj4string = crs(env))
+                                 proj4string = CRS(crs(env.e, proj = T)))
 
 #pa.pts <- remove.duplicates(pa.pts, zero = 5)
 pa.pts <- dup.cells(pa.pts, env[[1]])
 
 # Just to ensure all are falling inside study area
-pa.pts <- pa.pts[!is.na(extract(env[[1]], pa.pts)),]
+pa.pts <- pa.pts[!is.na(extract(env[[1]], coordinates(pa.pts))[,1]),]
 
 
 
@@ -110,7 +110,7 @@ for(i in 1:tl){
 tri.cord <- SpatialPoints(tri.cord)
 
 # Get intersection between mesh points and study area
-crs(tri.cord) <- crs(starea)
+crs(tri.cord) <- raster::crs(starea)
 intersec <- over(starea, tri.cord, returnList = T)
 
 # Remove the study area triangles from all to obtain the barrier ones
@@ -152,12 +152,12 @@ plot.bmodel(po.pts@coords[100,1:2], mesh = mesh, spde = b.model,
 # The 1D SPDE acts similar to a GAM spline, fitting a [possible] non-linear
 # relation. It's similar also to a "rw2" model (smoother than the "rw1"),
 # but have as advantage that you don't need to group the values prior to fitting.
-knots.st <- seq(-4.7, 2, length = 20)
+knots.st <- seq(minmax(env.e$tempmax)[1], minmax(ssp5$tempmax)[2], length = 25)
 d1mesh.st <- inla.mesh.1d(knots.st, degree = 2,
                           boundary = "free")
 
 d1spde.st <- inla.spde2.pcmatern(d1mesh.st,
-                                 prior.range = c(diff(c(-4.7, 2)), NA),
+                                 prior.range = c(diff(c(min(knots.st), max(knots.st))), NA),
                                  prior.sigma = c(1, 0.01),
                                  constr = T)
 
@@ -165,26 +165,26 @@ d1spde.st <- inla.spde2.pcmatern(d1mesh.st,
 # env.e$tempmax <- inla.group(env.e$tempmax, n = 30)
 # sst.prior <- list(prior = "pcprec", param = c(1, 0.01))
 # And use the following line in the components, instead of the d1spde.st
-# tempmax(env.e, model = "rw1", hyper = list(prec = sst.prior)) +
+# tempmax(env.e, model = "rw1", hyper = list(prec = sst.prior), main_layer = "tempmax") +
 
 
 
 # Prepare model components and formulas ----
 # We will test 4 distinct models
 # Model 1 - Essential covariates
-# SSTmax + SALmean + pH + spatial
+# SST + SALmean + pH + spatial
 # Model 2 - Mixing/hydrodynamics
-# SSTmax + SALmean + pH + wind + spatial
+# SST + SALmean + pH + wind + spatial
 # Model 3 - Productivity
-# SSTmax + SALmean + pH + silicate + chlomean + spatial
+# SST + SALmean + pH + silicate + chlomean + spatial
 # Model 4 - Full
-# SSTmax + SALmean + pH + wind + silicate + chlomean + spatial
+# SST + SALmean + pH + wind + silicate + chlomean + spatial
 
 # Components
 cmp <- list(
-  ~ tempmax(env.e, model = d1spde.st) +
-    salinitymean(env.e, model = "linear", mean.linear = 0, prec.linear = 0.01) +
-    ph(env.e, model = "linear", mean.linear = 0, prec.linear = 0.01) +
+  ~ tempmax(env.e, model = d1spde.st, main_layer = "tempmax") +
+    salinitymean(env.e, model = "linear", mean.linear = 0, prec.linear = 0.01, main_layer = "salinitymean") +
+    ph(env.e, model = "linear", mean.linear = 0, prec.linear = 0.01, main_layer = "ph") +
     spatial(coordinates, model = b.model, mapper = bru_mapper(mesh)) +
     spatial_pa(coordinates, copy = "spatial", fixed = FALSE) +
     Intercept(1)+
@@ -192,12 +192,12 @@ cmp <- list(
 )
 
 cmp[[2]] <- update(cmp[[1]], ~ . + 
-                     windspeed(env.e, model = "linear", mean.linear = 0, prec.linear = 0.01))
+                     windspeed(env.e, model = "linear", mean.linear = 0, prec.linear = 0.01, main_layer = "windspeed"))
 cmp[[3]] <- update(cmp[[1]], ~ . + 
-                     silicatemax(env.e, model = "linear", mean.linear = 0, prec.linear = 0.01) +
-                     chlomean(env.e, model = "linear", mean.linear = 0, prec.linear = 0.01))
+                     silicatemax(env.e, model = "linear", mean.linear = 0, prec.linear = 0.01, main_layer = "silicatemax") +
+                     chlomean(env.e, model = "linear", mean.linear = 0, prec.linear = 0.01, main_layer = "chlomean"))
 cmp[[4]] <- update(cmp[[3]], ~ . + 
-                     windspeed(env.e, model = "linear", mean.linear = 0, prec.linear = 0.01))
+                     windspeed(env.e, model = "linear", mean.linear = 0, prec.linear = 0.01, main_layer = "windspeed"))
 
 # Formulas
 forms <- list(
@@ -248,7 +248,7 @@ for (i in 1:length(forms)) {
 
 
 # Verify results ----
-tm <- 2 # <- change number to see each summary
+tm <- 1 # <- change number to see each summary
 
 # Summary and plots
 summary(m[[tm]])
@@ -257,12 +257,12 @@ summary(m[[tm]])
 exp(m[[tm]]$summary.hyperpar[2:3,])
 
 # Predict to view
-pxl <- as(env[[1]], "SpatialPixels")
+pxl <- as(raster::raster("data/env/crop_layers/tempmean.tif"),
+          "SpatialPixelsDataFrame")
 
 pred.f <- forms[[tm]] 
 
-pred.fit <- predict(m[[tm]], 
-                    pxl,
+pred.fit <- predict(m[[tm]], pxl,
                     ~ list(
                       full = eval(parse(text = paste0("exp(",
                                                       update.formula(pred.f, ~ . + Intercept + spatial)[2],
@@ -284,6 +284,10 @@ plot.res("spatial", pred.fit) + plot.res("sst", pred.fit) + plot.res("sal", pred
 # Plot 1D SPDE (SST component spline)
 plot.temp(m[[tm]])
 
+# Get and plot response curves
+resp.curves <- get.resp.curves(m[[tm]], forms[[tm]], mode = "exp")
+plot(resp.curves)
+
 # Get WAIC
 deltaIC(m[[1]], m[[2]], m[[3]], m[[4]], criterion = "WAIC")
 
@@ -304,8 +308,9 @@ cv.m <- 1:4
 
 # Prepare CV data
 # Get spatial blocks
-latpol <- raster(extent(starea), crs = crs(starea), nrows = 30, ncols = 1)
-latpol <- rasterToPolygons(latpol)
+latpol <- raster::raster(raster::extent(starea),
+                         crs = raster::crs(starea), nrows = 30, ncols = 1)
+latpol <- raster::rasterToPolygons(latpol)
 
 latpol$ID <- rep(1:5, 6)
 latpol <- intersect(latpol, starea)
@@ -316,7 +321,6 @@ plot(latpol, col = as.factor(latpol$ID));lines(starea)
 # with the block underlying field)
 ips.blocks <- ipoints(samplers = latpol, domain = mesh,
                       name = c("x", "y"), group = "ID")
-ips.blocks$weight <- ips.blocks$weight/1e6
 
 # Get the presence-only blocks
 po.blocks <- over(po.pts, latpol)[,2]
@@ -508,8 +512,11 @@ delta.metrics(metrics.cv, all = c("dss", "block_dss", "block_rmse"))
 
 # Predict models ----
 # After analyzing models and the cross-validation metrics we chose model:
-smodel <- 2
+smodel <- 1
 # Now we get predictions for this model
+
+# Remove unused objects to ensure predictions go smoothly
+rm(pred.fit)
 
 ##### Save individual components effects for the chosen model ----
 # This was already done after running the models as a exploratory tool
@@ -523,7 +530,7 @@ dir_create(dir)
 rgdal::setCPLConfigOption("GDAL_PAM_ENABLED", "FALSE")
 
 save.rast <- function(x, model){
-  r <- as(pred.comp[[x]], "RasterStack")
+  r <- as(pred.comp, "RasterStack")
   to.remove <- names(r)[!names(r) %in% c("mean", "sd", "q0.025", "q0.975")]
   r <- dropLayer(r, to.remove)
   for (i in 1:nlayers(r)) {
@@ -535,21 +542,23 @@ save.rast <- function(x, model){
 }
 
 # Predict model components
-pred.comp <- predict(m[[smodel]], data = pxl,
-                     formula = eval(
-                       parse(text = paste0("~ list(",
-                              paste(m[[smodel]]$names.fixed[-grep("ntercept", m[[smodel]]$names.fixed)],
-                                    m[[smodel]]$names.fixed[-grep("ntercept", m[[smodel]]$names.fixed)],
-                                    sep = "=", collapse = ","),",",
-                              paste(names(m[[smodel]]$summary.random),
-                                    names(m[[smodel]]$summary.random),
-                                    sep = "=", collapse = ","),
-                              ")"))
-                     ),
-                     n.samples = nsamp, seed = 2932)
+# Because predicting all effects at the same time produces a big Spatial object
+# this can make the computation slower. So we predict each one separately
+# and save to more efficiency:
+topred <- c(
+  m[[smodel]]$names.fixed[-grep("ntercept", m[[smodel]]$names.fixed)],
+  names(m[[smodel]]$summary.random)
+)
 
-# save
-sapply(names(pred.comp), save.rast, model = smodel)
+for (i in 1:length(topred)) {
+  cat(topred[i], "\n")
+  pred.comp <- predict(m[[smodel]], data = pxl,
+                       formula = as.formula(paste0("~", topred[i])),
+                       n.samples = nsamp, seed = 2932)
+  
+  # save
+  save.rast(x = topred[i], model = smodel)
+}
 
 ##### Predictions ----
 # inlabru gets the environmental layer from the R environment
@@ -583,7 +592,7 @@ for (i in 1:3) {
   
   # Predict to current scenario
   cat("Predicting for current scenario... \n")
-  env.e <- as(env, "SpatialPixelsDataFrame")
+  env.e <- env
   
   pred.cur <- predict(m[[smodel]],
                       data = pxl,
@@ -594,65 +603,65 @@ for (i in 1:3) {
   
   # Predict to SSP 1
   cat("Predicting for SSP1 scenario... \n")
-  env.e <- as(r12, "SpatialPixelsDataFrame")
+  env.e <- ssp1
   
-  pred.r12 <- predict(m[[smodel]],
+  pred.ssp1 <- predict(m[[smodel]],
                       data = pxl,
                       formula = pred.f,
                       n.samples = nsamp, seed = 2932)
   
-  (plot.res(obj = pred.r12))
+  (plot.res(obj = pred.ssp1))
   
   # Predict to SSP 2
   cat("Predicting for SSP2 scenario... \n")
-  env.e <- as(r24, "SpatialPixelsDataFrame")
+  env.e <- ssp2
   
-  pred.r24 <- predict(m[[smodel]],
+  pred.ssp2 <- predict(m[[smodel]],
                       data = pxl,
                       formula = pred.f,
                       n.samples = nsamp, seed = 2932)
   
-  (plot.res(obj = pred.r24))
+  (plot.res(obj = pred.ssp2))
   
   # Predict to SSP 3
   cat("Predicting for SSP3 scenario... \n")
-  env.e <- as(r37, "SpatialPixelsDataFrame")
+  env.e <- ssp3
   
-  pred.r37 <- predict(m[[smodel]],
+  pred.ssp3 <- predict(m[[smodel]],
                       data = pxl,
                       formula = pred.f,
                       n.samples = nsamp, seed = 2932)
   
-  (plot.res(obj = pred.r37))
+  (plot.res(obj = pred.ssp3))
   
   # Predict to SSP 5
   cat("Predicting for SSP5 scenario... \n")
-  env.e <- as(r58, "SpatialPixelsDataFrame")
+  env.e <- ssp5
   
-  pred.r58 <- predict(m[[smodel]],
+  pred.ssp5 <- predict(m[[smodel]],
                       data = pxl,
                       formula = pred.f,
                       n.samples = nsamp, seed = 2932)
   
-  (plot.res(obj = pred.r58))
+  (plot.res(obj = pred.ssp5))
   
   
   # Convert all to raster (easier handling)
   cat("Saving files... \n")
   pred.cur <- as(pred.cur, "RasterStack")
-  pred.r12 <- as(pred.r12, "RasterStack")
-  pred.r24 <- as(pred.r24, "RasterStack")
-  pred.r37 <- as(pred.r37, "RasterStack")
-  pred.r58 <- as(pred.r58, "RasterStack")
+  pred.ssp1 <- as(pred.ssp1, "RasterStack")
+  pred.ssp2 <- as(pred.ssp2, "RasterStack")
+  pred.ssp3 <- as(pred.ssp3, "RasterStack")
+  pred.ssp5 <- as(pred.ssp5, "RasterStack")
   
   to.remove <- names(pred.cur)[!names(pred.cur) %in% 
                                  c("mean", "sd", "q0.025", "q0.975")]
   
   pred.cur <- dropLayer(pred.cur, to.remove)
-  pred.r12 <- dropLayer(pred.r12, to.remove)
-  pred.r24 <- dropLayer(pred.r24, to.remove)
-  pred.r37 <- dropLayer(pred.r37, to.remove)
-  pred.r58 <- dropLayer(pred.r58, to.remove)
+  pred.ssp1 <- dropLayer(pred.ssp1, to.remove)
+  pred.ssp2 <- dropLayer(pred.ssp2, to.remove)
+  pred.ssp3 <- dropLayer(pred.ssp3, to.remove)
+  pred.ssp5 <- dropLayer(pred.ssp5, to.remove)
   
   # Save results
   dir <- paste("results", sp, "predictions", sep = "/")
@@ -671,20 +680,20 @@ for (i in 1:3) {
                              names(pred.cur), snam,
                              "_current.tif"))
   
-  save.rast(pred.r12, paste0(dir, "/", sp, "_",
-                             names(pred.r12), snam,
+  save.rast(pred.ssp1, paste0(dir, "/", sp, "_",
+                             names(pred.ssp1), snam,
                              "_ssp1.tif"))
   
-  save.rast(pred.r24, paste0(dir, "/", sp, "_",
-                             names(pred.r24), snam,
+  save.rast(pred.ssp2, paste0(dir, "/", sp, "_",
+                             names(pred.ssp2), snam,
                              "_ssp2.tif"))
   
-  save.rast(pred.r37, paste0(dir, "/", sp, "_",
-                             names(pred.r37), snam,
+  save.rast(pred.ssp3, paste0(dir, "/", sp, "_",
+                             names(pred.ssp3), snam,
                              "_ssp3.tif"))
   
-  save.rast(pred.r58, paste0(dir, "/", sp, "_",
-                             names(pred.r37), snam,
+  save.rast(pred.ssp5, paste0(dir, "/", sp, "_",
+                             names(pred.ssp5), snam,
                              "_ssp5.tif"))
   
   cat("Done! \n")
@@ -744,7 +753,7 @@ for (i in 1:length(m[[smodel]]$names.fixed)) {
 }
 
 pl <- eval(parse(text = paste("plots[[", 1:length(plots), "]]", collapse = "+")))
-ggsave(paste0(dir, "/effects_density.jpg"), pl)
+ggsave(paste0(dir, "/effects_density.jpg"), pl, quality = 100)
 
 # Get plots of probability density for the SPDE parameters
 sigp <- ggplot(data.frame(
@@ -764,38 +773,57 @@ sstp <- ggplot(data.frame(
   aes(x, y)) + geom_line() + xlab("SD(SST)") + ylab("") + theme_classic()
 
 sigp + rangep + sstp
-ggsave(paste0(dir, "/hyperpar_density.jpg"), height = 3)
+ggsave(paste0(dir, "/hyperpar_density.jpg"), height = 3, quality = 100)
 
 # Save plot of the temperature component
 ssteval <- predict(m[[smodel]],
-                   data.frame(env.e = seq(minValue(env$tempmax), maxValue(env$tempmax), by = 0.1)),
-                   ~ tempmax_eval(env.e), nsamples = 1000)
+                   NULL,
+                   ~ tempmax_eval(seq(minmax(env$tempmax)[1], minmax(env$tempmax)[2], by = 0.1)),
+                   nsamples = 1000)
+
+ssteval$x <- seq(minmax(env$tempmax)[1], minmax(env$tempmax)[2], by = 0.1)
 
 (p <- ggplot(ssteval) +
-  geom_line(aes(x = env.e, y = mean)) +
+  geom_line(aes(x = x, y = mean)) +
   geom_hline(yintercept = 0, linetype = "dashed")+
-  geom_ribbon(aes(x = env.e, ymin = q0.025, ymax = q0.975), alpha = .4) +
+  geom_ribbon(aes(x = x, ymin = q0.025, ymax = q0.975), alpha = .4) +
   scale_x_continuous(expand = c(0,0))+
   spatt + ylab("Mean effect") + xlab("Maximum SST"))
-ggsave(paste0(dir, "/sst_effect.jpg"))
+ggsave(paste0(dir, "/sst_effect.jpg"), quality = 100)
+
+extvals <- c(
+  seq(minmax(env$tempmax)[1], minmax(env$tempmax)[2], length.out = 100),
+  seq(minmax(env$tempmax)[2], minmax(ssp5$tempmax)[2], by = 0.1)
+)
 
 sstext <- predict(m[[smodel]],
-                   data.frame(env.e = c(
-                     seq(minValue(env$tempmax), maxValue(env$tempmax), length.out = 100),
-                     seq(maxValue(env$tempmax), maxValue(r37$tempmax), by = 0.1)
-                   )),
-                   ~ tempmax_eval(env.e), nsamples = 1000)
+                  NULL,
+                   ~ tempmax_eval(extvals), nsamples = 1000)
 sstext$class <- c(rep("True values", 100), rep("Extrapolation", nrow(sstext)-100))
+sstext$x <- extvals
 
 (p <- ggplot(sstext) +
-    geom_line(aes(x = env.e, y = mean, color = class)) +
+    geom_line(aes(x = x, y = mean, color = class)) +
     geom_hline(yintercept = 0, linetype = "dashed")+
-    geom_vline(xintercept = max(sstext$env.e[sstext$class == "True values"]),
+    geom_vline(xintercept = max(sstext$x[sstext$class == "True values"]),
                color = "red", linetype = "dashed")+
-    geom_ribbon(aes(x = env.e, ymin = q0.025, ymax = q0.975, fill = class), alpha = .4) +
+    geom_ribbon(aes(x = x, ymin = q0.025, ymax = q0.975, fill = class), alpha = .4) +
     scale_x_continuous(expand = c(0,0))+
     spatt + ylab("Mean effect") + xlab("Maximum SST")) + theme(legend.title = element_blank())
-ggsave(paste0(dir, "/sst_effect_extrapolation.jpg"))
+ggsave(paste0(dir, "/sst_effect_extrapolation.jpg"), quality = 100)
+
+# Save response curves
+resp.curves <- get.resp.curves(m[[tm]], forms[[tm]], mode = NULL, samp = 1000)
+plot(resp.curves)
+ggsave(paste0(dir, "/resp_curves_lin.jpg"), quality = 100)
+
+resp.curves <- get.resp.curves(m[[tm]], forms[[tm]], mode = "exp", samp = 1000)
+plot(resp.curves)
+ggsave(paste0(dir, "/resp_curves_exp.jpg"), quality = 100)
+
+resp.curves <- get.resp.curves(m[[tm]], forms[[tm]], mode = "cloglog", samp = 1000)
+plot(resp.curves)
+ggsave(paste0(dir, "/resp_curves_pa.jpg"), quality = 100)
 
 
 

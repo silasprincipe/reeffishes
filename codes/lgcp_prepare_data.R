@@ -55,7 +55,8 @@ ggplot()+gg(mesh)+gg(ips)+coord_fixed()+spatt
 
 
 # Prepare full covariate dataset ----
-env <- stack("data/env/crop_layers/tempmax.tif",
+env <- stack("data/env/crop_layers/tempmean.tif",
+             "data/env/crop_layers/tempmax.tif",
              "data/env/crop_layers/salinitymean.tif",
              "data/env/crop_layers/chlomean.tif",
              "data/env/crop_layers/silicatemax.tif",
@@ -68,11 +69,7 @@ env$chlomean <- log(env$chlomean)
 env <- scale(env)
 
 getd <- function(rast, ip){
-  rast <- extend(rast, (extent(min(mesh$loc[,1]),
-                               max(mesh$loc[,1]),
-                               min(mesh$loc[,2]),
-                               max(mesh$loc[,2])))+
-                   c(-10, 10, -10, 10))
+  rast <- extend(rast, extent(-105, -20, -50, 50))
   
   epts <- extract(rast, ip)
   epts <- data.frame(epts, coordinates(ip))
@@ -80,12 +77,14 @@ getd <- function(rast, ip){
   tofill <- epts[is.na(epts[,1]),]
   
   # get adjacent
-  adj <- adjacent(rast, cellFromXY(rast, tofill[, c("x", "y")]), pairs = F)
+  # adj <- adjacent(rast, cellFromXY(rast, tofill[, c("x", "y")]), pairs = F)
+  # 
+  # tofill <- rbind(
+  #   tofill,
+  #   cbind(extract(rast, adj), xyFromCell(rast, adj))
+  # )
   
-  tofill <- rbind(
-    tofill,
-    cbind(extract(rast, adj), xyFromCell(rast, adj))
-  )
+  tofill <- tofill[is.na(tofill[,1]),]
   
   epts <- data.frame(rasterToPoints(rast))
   
@@ -113,8 +112,6 @@ env.e <- getd(env, ip = ips)
 
 # Save data ----
 lgcp.data <- list(
-  # Environmental layers expanded data
-  env.e = env.e,
   # Mesh
   mesh = mesh,
   # Study area shape
@@ -122,3 +119,13 @@ lgcp.data <- list(
 )
 
 saveRDS(lgcp.data, file = "data/lgcp_data.rds")
+
+if (!dir.exists("data/env/ready_layers/")) {
+  dir.create("data/env/ready_layers/")
+}
+
+# Avoid GDAL to save xml aux file
+rgdal::setCPLConfigOption("GDAL_PAM_ENABLED", "FALSE")
+
+writeRaster(env.e, filename = paste0("data/env/ready_layers/", names(env.e)),
+            bylayer = T, format = "GTiff", overwrite = T)
