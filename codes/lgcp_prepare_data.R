@@ -61,8 +61,7 @@ env <- stack("data/env/crop_layers/tempmean.tif",
              "data/env/crop_layers/chlomean.tif",
              "data/env/crop_layers/silicatemax.tif",
              "data/env/crop_layers/ph.tif",
-             "data/env/crop_layers/windspeed.tif",
-             "data/env/crop_layers/distcoast.tif")
+             "data/env/crop_layers/windspeed.tif")
 
 env$chlomean <- log(env$chlomean)
 

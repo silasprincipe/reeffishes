@@ -15,8 +15,7 @@ env.e <- rast(c("data/env/ready_layers/tempmean.tif",
               "data/env/ready_layers/chlomean.tif",
               "data/env/ready_layers/silicatemax.tif",
               "data/env/ready_layers/ph.tif",
-              "data/env/ready_layers/windspeed.tif",
-              "data/env/ready_layers/distcoast.tif"))
+              "data/env/ready_layers/windspeed.tif"))
 
 
 # Load current period data ----
@@ -26,8 +25,7 @@ env <- rast(c("data/env/crop_layers/tempmean.tif",
              "data/env/crop_layers/chlomean.tif",
              "data/env/crop_layers/silicatemax.tif",
              "data/env/crop_layers/ph.tif",
-             "data/env/crop_layers/windspeed.tif",
-             "data/env/crop_layers/distcoast.tif"))
+             "data/env/crop_layers/windspeed.tif"))
 
 # Put chl-a in log
 env$chlomean <- log(env$chlomean)
@@ -38,9 +36,6 @@ sde <- global(env, fun = sd, na.rm = T)[,1]
 
 # Scale data
 env <- scale(env)
-
-# Correct names
-names(env.e)[8] <- names(env)[8] <- "distcoast"
 
 
 
@@ -54,8 +49,7 @@ lays <- c("data/env/fut_layers/tempmean.tif",
           "data/env/fut_layers/windspeed.tif")
 
 # SSP1
-ssp1 <- rast(c(gsub(".tif", "_ssp126.tif", lays),
-              "data/env/crop_layers/distcoast.tif"))
+ssp1 <- rast(gsub(".tif", "_ssp126.tif", lays))
 
 names(ssp1) <- names(env)
 
@@ -64,8 +58,7 @@ ssp1$chlomean <- log(ssp1$chlomean)
 ssp1 <- (ssp1 - m)/sde
 
 # SSP2
-ssp2 <- rast(c(gsub(".tif", "_ssp245.tif", lays),
-              "data/env/crop_layers/distcoast.tif"))
+ssp2 <- rast(gsub(".tif", "_ssp245.tif", lays))
 
 names(ssp2) <- names(env)
 
@@ -74,8 +67,7 @@ ssp2$chlomean <- log(ssp2$chlomean)
 ssp2 <- (ssp2 - m)/sde
 
 # SSP3
-ssp3 <- rast(c(gsub(".tif", "_ssp370.tif", lays),
-              "data/env/crop_layers/distcoast.tif"))
+ssp3 <- rast(gsub(".tif", "_ssp370.tif", lays))
 
 names(ssp3) <- names(env)
 
@@ -84,8 +76,7 @@ ssp3$chlomean <- log(ssp3$chlomean)
 ssp3 <- (ssp3 - m)/sde
 
 # SSP5
-ssp5 <- rast(c(gsub(".tif", "_ssp585.tif", lays),
-              "data/env/crop_layers/distcoast.tif"))
+ssp5 <- rast(gsub(".tif", "_ssp585.tif", lays))
 
 names(ssp5) <- names(env)
 
