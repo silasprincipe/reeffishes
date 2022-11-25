@@ -13,8 +13,7 @@ get.resp.curves <- function(fit, vars, mode = NULL, samp = 100,
                     "data/env/ready_layers/chlomean.tif",
                     "data/env/ready_layers/silicatemax.tif",
                     "data/env/ready_layers/ph.tif",
-                    "data/env/ready_layers/windspeed.tif",
-                    "data/env/ready_layers/distcoast.tif"))
+                    "data/env/ready_layers/windspeed.tif"))
     bvals <- rbind(extract(env.e, coordinates(ips)),
                    extract(env.e, coordinates(po.pts)),
                    extract(env.e, coordinates(pa.pts)))
@@ -127,7 +126,7 @@ get.resp.curves <- function(fit, vars, mode = NULL, samp = 100,
 #   
 # }
 
-plot.respCur <- function(x, free = NULL, med = FALSE) {
+plot.respCur <- function(x, free = NULL, mode = "both") {
   
   sc <- ifelse("lin" %in% class(x), "Linear predictor",
                ifelse("exp" %in% class(x), "Relative Occurrence Rate", "Probability"))
@@ -144,12 +143,18 @@ plot.respCur <- function(x, free = NULL, med = FALSE) {
   
   dat <- do.call("rbind", x)
   
-  if (med) {
-    p <- ggplot(dat) +
-      geom_line(aes(x = base, y = q0.5))
+  if (mode != "both") {
+    if (mode == "median") {
+      p <- ggplot(dat) +
+        geom_line(aes(x = base, y = q0.5))
+    } else {
+      p <- ggplot(dat) +
+        geom_line(aes(x = base, y = mean))
+    }
   } else {
     p <- ggplot(dat) +
-      geom_line(aes(x = base, y = mean))
+      geom_line(aes(x = base, y = mean), color = "#233461", linetype = "dashed") +
+      geom_line(aes(x = base, y = q0.5))
   }
   
   p <- p + 

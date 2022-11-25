@@ -22,11 +22,11 @@ source("functions/response_curves.R")
 # Settings
 set.seed(2932) # Replicability of sampling
 spatt <- theme_classic() # Theme for better ploting
-nsamp <- 100 # Define number of sampling for the final predictions
-nsampcv <- 100 # Define number of sampling in the CV predictions
-itnumb <- 20 # Define number of maximum inlabru iterations
-itnumbcv <- 1 # Define number of maximum inlabru iterations in cross-validation
-intest <- "eb" # Integration strategy
+nsamp <- 2000 # Define number of sampling for the final predictions
+nsampcv <- 1000 # Define number of sampling in the CV predictions
+itnumb <- 40 # Define number of maximum inlabru iterations
+itnumbcv <- 10 # Define number of maximum inlabru iterations in cross-validation
+intest <- "auto" # Integration strategy
 
 # Species (each one is modeled separately)
 sp <- "acch"
@@ -512,7 +512,7 @@ delta.metrics(metrics.cv, all = c("dss", "block_dss", "block_rmse"))
 
 # Predict models ----
 # After analyzing models and the cross-validation metrics we chose model:
-smodel <- 1
+smodel <- 2
 # Now we get predictions for this model
 
 # Remove unused objects to ensure predictions go smoothly
@@ -531,7 +531,7 @@ rgdal::setCPLConfigOption("GDAL_PAM_ENABLED", "FALSE")
 
 save.rast <- function(x, model){
   r <- as(pred.comp, "RasterStack")
-  to.remove <- names(r)[!names(r) %in% c("mean", "sd", "q0.025", "q0.975")]
+  to.remove <- names(r)[!names(r) %in% c("mean", "sd", "q0.025", "q0.5", "q0.975")]
   r <- dropLayer(r, to.remove)
   for (i in 1:nlayers(r)) {
     writeRaster(r[[i]], paste0(dir, "/", sp, "_m", model, "_",
@@ -655,7 +655,7 @@ for (i in 1:3) {
   pred.ssp5 <- as(pred.ssp5, "RasterStack")
   
   to.remove <- names(pred.cur)[!names(pred.cur) %in% 
-                                 c("mean", "sd", "q0.025", "q0.975")]
+                                 c("mean", "sd", "q0.025", "q0.5", "q0.975")]
   
   pred.cur <- dropLayer(pred.cur, to.remove)
   pred.ssp1 <- dropLayer(pred.ssp1, to.remove)
@@ -728,6 +728,10 @@ model.summ <- rbind(model.summ, hyper)
 
 # Save summaries
 write.csv(model.summ, paste0(dir, "/", sp, "_model_summary.csv"))
+write.csv(data.frame(
+  model = 1:4,
+  waic = sapply(1:4, function(x){m[[x]]$waic$waic})
+), paste0(dir, "/", sp, "_model_waic.csv"))
 
 # Save CV metrics
 write.csv(metrics.cv, paste0(dir, "/", sp, "_cv_metrics.csv"))
@@ -785,6 +789,7 @@ ssteval$x <- seq(minmax(env$tempmax)[1], minmax(env$tempmax)[2], by = 0.1)
 
 (p <- ggplot(ssteval) +
   geom_line(aes(x = x, y = mean)) +
+  geom_line(aes(x = x, y = q0.5), linetype = "dotted", color = "grey40") +
   geom_hline(yintercept = 0, linetype = "dashed")+
   geom_ribbon(aes(x = x, ymin = q0.025, ymax = q0.975), alpha = .4) +
   scale_x_continuous(expand = c(0,0))+
@@ -804,6 +809,7 @@ sstext$x <- extvals
 
 (p <- ggplot(sstext) +
     geom_line(aes(x = x, y = mean, color = class)) +
+    geom_line(aes(x = x, y = q0.5, color = class), linetype = "dotted") +
     geom_hline(yintercept = 0, linetype = "dashed")+
     geom_vline(xintercept = max(sstext$x[sstext$class == "True values"]),
                color = "red", linetype = "dashed")+
@@ -813,15 +819,15 @@ sstext$x <- extvals
 ggsave(paste0(dir, "/sst_effect_extrapolation.jpg"), quality = 100)
 
 # Save response curves
-resp.curves <- get.resp.curves(m[[tm]], forms[[tm]], mode = NULL, samp = 1000)
+resp.curves <- get.resp.curves(m[[smodel]], forms[[smodel]], mode = NULL, samp = 1000)
 plot(resp.curves)
 ggsave(paste0(dir, "/resp_curves_lin.jpg"), quality = 100)
 
-resp.curves <- get.resp.curves(m[[tm]], forms[[tm]], mode = "exp", samp = 1000)
+resp.curves <- get.resp.curves(m[[smodel]], forms[[smodel]], mode = "exp", samp = 1000)
 plot(resp.curves)
 ggsave(paste0(dir, "/resp_curves_exp.jpg"), quality = 100)
 
-resp.curves <- get.resp.curves(m[[tm]], forms[[tm]], mode = "cloglog", samp = 1000)
+resp.curves <- get.resp.curves(m[[smodel]], forms[[smodel]], mode = "cloglog", samp = 1000)
 plot(resp.curves)
 ggsave(paste0(dir, "/resp_curves_pa.jpg"), quality = 100)
 

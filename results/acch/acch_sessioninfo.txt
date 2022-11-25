@@ -13,11 +13,11 @@
     This work is part of a PhD project being held at the Oceanographic Institute - USP 
  
  Settings used in the modeling: 
-    Integration strategy: eb 
-    Number of samplings prediction: 100 
-    Number of samplings CV: 100 
-    Number of inlabru iterations: 20 
-    Number of inlabru iterations on CV: 1 
+    Integration strategy: auto 
+    Number of samplings prediction: 2000 
+    Number of samplings CV: 1000 
+    Number of inlabru iterations: 40 
+    Number of inlabru iterations on CV: 10 
 
  ============= 
  
@@ -37,8 +37,9 @@ attached base packages:
 [1] parallel  stats     graphics  grDevices utils     datasets  methods   base     
 
 other attached packages:
- [1] fields_13.3        viridis_0.6.2      viridisLite_0.4.0  spam_2.8-0         fs_1.5.2           patchwork_1.1.1    ggplot2_3.3.6     
- [8] raster_3.5-29      terra_1.6-17       inlabru_2.6.0.9003 INLA_22.11.08      sp_1.5-0           foreach_1.5.2      Matrix_1.5-1      
+ [1] fields_13.3        viridis_0.6.2      viridisLite_0.4.0  spam_2.8-0         fs_1.5.2           patchwork_1.1.1   
+ [7] ggplot2_3.3.6      raster_3.5-29      terra_1.6-17       inlabru_2.6.0.9003 INLA_22.11.08      sp_1.5-0          
+[13] foreach_1.5.2      Matrix_1.5-1      
 
 loaded via a namespace (and not attached):
  [1] tidyselect_1.1.2       purrr_0.3.4            splines_4.2.0          lattice_0.20-45        colorspace_2.0-3      
