@@ -53,7 +53,7 @@ rsconnect/
 !/data/env/crop_layers
 !/data/env/fut_layers
 !/data/env/bath_layers
-/data/gis/*
+!/data/env/ready_layers
 
 # Large bath layer (original GEBCO)
 /data/env/bath_layers/gebco_america_africa.tif
