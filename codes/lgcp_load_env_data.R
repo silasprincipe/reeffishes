@@ -92,4 +92,38 @@ ssp5 <- (ssp5 - m)/sde
 
 rm(m, sde, lays)
 
+# Include bathymetry/distance to coast, if existent
+if (file.exists("data/env/ready_layers/bath_2_300.tif")) {
+  bath <- rast("data/env/ready_layers/bath_2_300.tif")
+  bath <- scale(bath)
+  env.e <- c(env.e, bath)
+  
+  bath <- rast("data/env/bath_layers/bath_2_300.tif")
+  bath <- mask(bath, env[[1]])
+  bath <- scale(bath)
+  
+  env <- c(env, bath)
+  ssp1 <- c(ssp1, bath)
+  ssp2 <- c(ssp2, bath)
+  ssp3 <- c(ssp3, bath)
+  ssp5 <- c(ssp5, bath)
+  rm(bath)
+}
+
+if (file.exists("data/env/ready_layers/distcoast.tif")) {
+  distc <- rast("data/env/ready_layers/distcoast.tif")
+  distc <- scale(distc)
+  env.e <- c(env.e, distc)
+  
+  distc <- rast("data/env/crop_layers/distcoast.tif")
+  names(distc) <- "distcoast"
+  distc <- scale(distc)
+  
+  env <- c(env, distc)
+  ssp1 <- c(ssp1, distc)
+  ssp2 <- c(ssp2, distc)
+  ssp3 <- c(ssp3, distc)
+  ssp5 <- c(ssp5, distc)
+  rm(distc)
+}
 # END

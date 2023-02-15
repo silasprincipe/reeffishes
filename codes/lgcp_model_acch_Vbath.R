@@ -24,9 +24,9 @@ set.seed(2932) # Replicability of sampling
 spatt <- theme_classic() # Theme for better ploting
 nsamp <- 2000 # Define number of sampling for the final predictions
 nsampcv <- 1000 # Define number of sampling in the CV predictions
-itnumb <- 10 # Define number of maximum inlabru iterations
+itnumb <- 40 # Define number of maximum inlabru iterations
 itnumbcv <- 10 # Define number of maximum inlabru iterations in cross-validation
-intest <- "eb" # Integration strategy
+intest <- "auto" # Integration strategy
 
 # Species (each one is modeled separately)
 sp <- "acch"
@@ -152,7 +152,8 @@ plot.bmodel(po.pts@coords[100,1:2], mesh = mesh, spde = b.model,
 # The 1D SPDE acts similar to a GAM spline, fitting a [possible] non-linear
 # relation. It's similar also to a "rw2" model (smoother than the "rw1"),
 # but have as advantage that you don't need to group the values prior to fitting.
-knots.st <- seq(minmax(env.e$tempmax)[1], minmax(ssp5$tempmax)[2], length = 25)
+knots.st <- seq((minmax(env.e$tempmax)[1]-0.01), (minmax(ssp5$tempmax)[2]+0.01),
+                length = 25)
 d1mesh.st <- inla.mesh.1d(knots.st, degree = 2,
                           boundary = "free")
 

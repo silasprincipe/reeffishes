@@ -79,6 +79,8 @@ env <- stack("data/env/crop_layers/tempmean.tif",
 
 env$chlomean <- log(env$chlomean)
 
+names(env)[8] <- "distcoast"
+
 env <- mask(env, env[[1]]) # Just to ensure all layers are equal
 
 env <- scale(env)
@@ -139,8 +141,10 @@ if (!dir.exists("data/env/ready_layers/")) {
   dir.create("data/env/ready_layers/")
 }
 
-# Avoid GDAL to save xml aux file
-rgdal::setCPLConfigOption("GDAL_PAM_ENABLED", "FALSE")
+# Convert to terra::rast to avoid problems when saving/reading in new versions
+env.e <- terra::rast(env.e)
 
-writeRaster(env.e, filename = paste0("data/env/ready_layers/", names(env.e)),
-            bylayer = T, format = "GTiff", overwrite = T)
+terra::writeRaster(env.e,
+                   filename = paste0("data/env/ready_layers/",
+                                     names(env.e), ".tif"),
+                   overwrite = T)
