@@ -1,5 +1,19 @@
 # Atlantic reef fish distribution modelling
 
+## Differences in this branch
+
+There's a new working version for including depth (bathymetry) in the model. This involved producing a finer mesh. In this branch we also created a mesh with smaller outer bound and less buffer before simplification of the study area.
+
+For running this new version, run the files `lgcp_prepare_data_Vbath.R` (but this can be skipped, as the uploaded raster layers are already from this file) and `lgcp_model_acch_Vbath.R`.
+
+### Results from this test
+
+- With a finer mesh (n = , integ. points = ), I was able to include depth and the model worked pretty well. Estimates for both bathymetry and the other variables were within something normal.  
+- Estimated range was much lower than a model with less mesh nodes, whilst the sigma was higher.  
+- Predicted lambda was also lower than with less nodes (i.e. with less nodes the value is closer to the actual number of points (see `length(po.pts)`)).  
+- Also on this direction, the cross-validation scores for the binomial part of the model (presence-absence) were marginally lower.  
+- Removing depth does not alter those findings, thus the reduction on the scores or in the predicted lambda should be because of the higher number of points.  
+
 ## Step-by-step modelling
 
 1. Data for each species and environmental layers are **all ready to use**, and were prepared with the files starting with `databases_*`, `env_data_*` and `spdata_*`. You can start from the next step.  

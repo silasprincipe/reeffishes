@@ -31,20 +31,20 @@ starea <- calc(base, function(x){x[!is.na(x)] <- 1; x})
 starea <- rasterToPolygons(starea, dissolve = T)
 
 # Simplify study area
-starea <- gSimplify(gBuffer(starea, width=0.5), tol=0.5);plot(starea)
+starea <- gSimplify(gBuffer(starea, width=0.1), tol=0.1);plot(starea)
 
 # Get an outer bound that cover the whole study area
 starea.pts <- rasterToPoints(base)
 outer.bound <- inla.nonconvex.hull(starea.pts,
-                                   convex = -0.1)
+                                   convex = -0.05)
 lines(outer.bound) # Plot to see
 
 
 # Prepare INLA mesh ----
 mesh <- inla.mesh.2d(
   boundary = list(starea, outer.bound),
-  max.edge = c(1, 8),
-  cutoff = 0.4,
+  max.edge = c(0.4, 8),
+  cutoff = 0.1,
   crs = crs(starea),
   offset = c(0.1)
 )

@@ -24,9 +24,9 @@ set.seed(2932) # Replicability of sampling
 spatt <- theme_classic() # Theme for better ploting
 nsamp <- 2000 # Define number of sampling for the final predictions
 nsampcv <- 1000 # Define number of sampling in the CV predictions
-itnumb <- 40 # Define number of maximum inlabru iterations
-itnumbcv <- 10 # Define number of maximum inlabru iterations in cross-validation
-intest <- "auto" # Integration strategy
+itnumb <- 1 # Define number of maximum inlabru iterations
+itnumbcv <- 1 # Define number of maximum inlabru iterations in cross-validation
+intest <- "eb" # Integration strategy
 
 # Species (each one is modeled separately)
 sp <- "acch"
@@ -186,7 +186,7 @@ cmp <- list(
   ~ tempmax(env.e, model = d1spde.st, main_layer = "tempmax") +
     salinitymean(env.e, model = "linear", mean.linear = 0, prec.linear = 0.01, main_layer = "salinitymean") +
     ph(env.e, model = "linear", mean.linear = 0, prec.linear = 0.01, main_layer = "ph") +
-    bath(env.e, model = "linear", mean.linear = 0, prec.linear = 0.01, main_layer = "bath_2_300") +
+    bath(env.e, model = "linear", mean.linear = 0, prec.linear = 0.01, main_layer = "bath") +
     spatial(coordinates, model = b.model, mapper = bru_mapper(mesh)) +
     spatial_pa(coordinates, copy = "spatial", fixed = FALSE) +
     Intercept(1)+
