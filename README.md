@@ -8,7 +8,7 @@ For running this new version, run the files `lgcp_prepare_data_Vbath.R` (but thi
 
 ### Results from this test
 
-- With a finer mesh (n = , integ. points = ), I was able to include depth and the model worked pretty well. Estimates for both bathymetry and the other variables were within something normal.  
+- With a finer mesh, I was able to include depth and the model worked pretty well. Estimates for both bathymetry and the other variables were within something normal.  
 - Estimated range was much lower than a model with less mesh nodes, whilst the sigma was higher.  
 - Predicted lambda was also lower than with less nodes (i.e. with less nodes the value is closer to the actual number of points (see `length(po.pts)`)).  
 - Also on this direction, the cross-validation scores for the binomial part of the model (presence-absence) were marginally lower.  
