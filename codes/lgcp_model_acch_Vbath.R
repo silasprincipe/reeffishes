@@ -24,7 +24,7 @@ set.seed(2932) # Replicability of sampling
 spatt <- theme_classic() # Theme for better ploting
 nsamp <- 2000 # Define number of sampling for the final predictions
 nsampcv <- 1000 # Define number of sampling in the CV predictions
-itnumb <- 1 # Define number of maximum inlabru iterations
+itnumb <- 10 # Define number of maximum inlabru iterations
 itnumbcv <- 1 # Define number of maximum inlabru iterations in cross-validation
 intest <- "eb" # Integration strategy
 
@@ -73,6 +73,17 @@ pa.pts <- dup.cells(pa.pts, env[[1]])
 
 # Just to ensure all are falling inside study area
 pa.pts <- pa.pts[!is.na(extract(env[[1]], coordinates(pa.pts))[,1]),]
+
+# Remove absence points that are too close to the presences
+# We consider here a buffer of 10km
+presences <- pa.pts[pa.pts$presence == 1,]
+presences <- buffer(presences, 10000)
+absences.in <- over(pa.pts, presences)
+absences.in <- pa.pts[pa.pts$presence == 0 & !is.na(absences.in),]
+
+pa.pts <- pa.pts[is.na(over(pa.pts, absences.in))[,1],]
+
+rm(presences, absences.in)
 
 
 
@@ -250,7 +261,7 @@ for (i in 1:length(forms)) {
 
 
 # Verify results ----
-tm <- 1 # <- change number to see each summary
+tm <- 2 # <- change number to see each summary
 
 # Summary and plots
 summary(m[[tm]])
@@ -275,7 +286,7 @@ pred.fit <- predict(m[[tm]], pxl,
                                                       "))"))),
                       spatial = spatial,
                       bath = bath,
-                      sst = tempmax,
+                      sst = temp,
                       sal = salinitymean
                       # Other variables can be added...
                     ))
@@ -288,7 +299,7 @@ plot.res("spatial", pred.fit) + plot.res("sst", pred.fit) + plot.res("sal", pred
 plot.temp(m[[tm]])
 
 # Get and plot response curves
-resp.curves <- get.resp.curves(m[[tm]], forms[[tm]], mode = "exp")
+resp.curves <- get.resp.curves(m[[tm]], forms[[tm]], mode = "cloglog")
 plot(resp.curves)
 
 # Get WAIC
@@ -307,7 +318,7 @@ pred.lamb <- predict(m[[tm]], ips,
 # just a subset to save time.
 
 # Chose the subset to be CV
-cv.m <- 1:4
+cv.m <- 1
 
 # Prepare CV data
 # Get spatial blocks
@@ -357,6 +368,9 @@ for (z in cv.m) {
     block_tvals = as.numeric(table(po.blocks)),
     block_pvals = NA
   )
+  
+  # Get a vector to hold PO Boyce results
+  cv.boyce.full <- rep(NA, 5)
   
   # Produce cross-validated plots (optional)
   #plot.list <- list()
@@ -416,6 +430,22 @@ for (z in cv.m) {
     cv.df.pa$pred_pa_q025[pa.blocks == k] <- cv.pred.pa$q0.025
     cv.df.pa$pred_pa_q975[pa.blocks == k] <- cv.pred.pa$q0.975
     
+    # Get Boyce of PO points
+    test.po <- po.pts[po.blocks == k,]
+    test.ips <- ips.blocks[ips.blocks$ID == k,]
+    
+    test.dat <- rbind(test.po, test.ips)
+    
+    cv.pred.pa.f <- predict(blockm, test.dat,
+                            as.formula(paste0(
+                              "~1-",
+                              update(forms[[z]], ~ exp(-exp(. + intercept_pa + spatial_pa)))[2]
+                            )), n.samples = nsampcv)
+    
+    cv.boyce.full[k] <-  ecospat::ecospat.boyce(cv.pred.pa.f$mean,
+                                                cv.pred.pa.f$mean[1:length(test.po)])$cor
+    
+    
     # Integrated 
     pred.int <- predict(blockm, ips.blocks,
                         update(forms[[z]], ~ sum(weight * exp(. + Intercept + spatial))),
@@ -469,8 +499,10 @@ for (z in cv.m) {
   
   cv.res[[z]] <- list(
     pa = pa.metrics,
+    cv_pa = cv.df.pa,
     b_vals = cv.vals,
-    b_full = pred.int$mean
+    b_full = pred.int$mean,
+    boyce_po = cv.boyce.full
   )
   
   rm(pred.pa, pred.int)
@@ -480,8 +512,13 @@ for (z in cv.m) {
 # See results
 pa.cv <- lapply(cv.res, function(x){
   pa <- x$pa
+  cv.pa <- x$cv_pa
+  boyce <- ecospat::ecospat.boyce(cv.pa$pred_pa_mean,
+                                  cv.pa$pred_pa_mean[cv.pa$orig == 1])$cor
   data.frame(full_auc = pa$auc[2],
-             cv_auc = pa$auc[1])
+             cv_auc = pa$auc[1],
+             cv_boyce = boyce,
+             cv_boyce_po = mean(x$boyce_po))
 })
 metrics.cv <- lapply(cv.res, function(x){
   cv <- x$b_vals
