@@ -24,8 +24,8 @@ set.seed(2932) # Replicability of sampling
 spatt <- theme_classic() # Theme for better ploting
 nsamp <- 2000 # Define number of sampling for the final predictions
 nsampcv <- 1000 # Define number of sampling in the CV predictions
-itnumb <- 10 # Define number of maximum inlabru iterations
-itnumbcv <- 1 # Define number of maximum inlabru iterations in cross-validation
+itnumb <- 30 # Define number of maximum inlabru iterations
+itnumbcv <- 10 # Define number of maximum inlabru iterations in cross-validation
 intest <- "eb" # Integration strategy
 
 # Species (each one is modeled separately)
@@ -74,7 +74,16 @@ pa.pts <- dup.cells(pa.pts, env[[1]])
 # Just to ensure all are falling inside study area
 pa.pts <- pa.pts[!is.na(extract(env[[1]], coordinates(pa.pts))[,1]),]
 
+# Remove absence points that are too close to the presences
+# We consider here a buffer of 10km
+presences <- pa.pts[pa.pts$presence == 1,]
+presences <- buffer(presences, 10000)
+absences.in <- over(pa.pts, presences)
+absences.in <- pa.pts[pa.pts$presence == 0 & !is.na(absences.in),]
 
+pa.pts <- pa.pts[is.na(over(pa.pts, absences.in))[,1],]
+
+rm(presences, absences.in)
 
 # Plot all to see
 ggplot()+
@@ -186,7 +195,6 @@ cmp <- list(
   ~ tempmax(env.e, model = d1spde.st, main_layer = "tempmax") +
     salinitymean(env.e, model = "linear", mean.linear = 0, prec.linear = 0.01, main_layer = "salinitymean") +
     ph(env.e, model = "linear", mean.linear = 0, prec.linear = 0.01, main_layer = "ph") +
-    bath(env.e, model = "linear", mean.linear = 0, prec.linear = 0.01, main_layer = "bath") +
     spatial(coordinates, model = b.model, mapper = bru_mapper(mesh)) +
     spatial_pa(coordinates, copy = "spatial", fixed = FALSE) +
     Intercept(1)+
@@ -203,7 +211,7 @@ cmp[[4]] <- update(cmp[[3]], ~ . +
 
 # Formulas
 forms <- list(
-  ~ tempmax + salinitymean + ph + bath
+  ~ tempmax + salinitymean + ph
 )
 
 forms[[2]] <- update(forms[[1]], ~ . + windspeed)
@@ -274,7 +282,6 @@ pred.fit <- predict(m[[tm]], pxl,
                                                       update.formula(pred.f, ~ . + intercept_pa + spatial_pa)[2],
                                                       "))"))),
                       spatial = spatial,
-                      bath = bath,
                       sst = tempmax,
                       sal = salinitymean
                       # Other variables can be added...
@@ -288,7 +295,7 @@ plot.res("spatial", pred.fit) + plot.res("sst", pred.fit) + plot.res("sal", pred
 plot.temp(m[[tm]])
 
 # Get and plot response curves
-resp.curves <- get.resp.curves(m[[tm]], forms[[tm]], mode = "exp")
+resp.curves <- get.resp.curves(m[[tm]], forms[[tm]], mode = "cloglog")
 plot(resp.curves)
 
 # Get WAIC

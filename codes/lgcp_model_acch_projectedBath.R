@@ -24,9 +24,9 @@ set.seed(2932) # Replicability of sampling
 spatt <- theme_classic() # Theme for better ploting
 nsamp <- 2000 # Define number of sampling for the final predictions
 nsampcv <- 1000 # Define number of sampling in the CV predictions
-itnumb <- 10 # Define number of maximum inlabru iterations
-itnumbcv <- 1 # Define number of maximum inlabru iterations in cross-validation
-intest <- "eb" # Integration strategy
+itnumb <- 40 # Define number of maximum inlabru iterations
+itnumbcv <- 10 # Define number of maximum inlabru iterations in cross-validation
+intest <- "auto" # Integration strategy
 
 # Species (each one is modeled separately)
 sp <- "acch"
@@ -181,12 +181,43 @@ d1spde.st <- inla.spde2.pcmatern(d1mesh.st,
 # Model 4 - Full
 # SST + SALmean + pH + wind + silicate + chlomean + spatial
 
+
+
+A <- inla.spde.make.A(mesh, rbind(po.pts, pa.pts)) # mesh and data points
+covs <- raster::extract(stack(env$bath), rbind(po.pts, pa.pts)) # Extract value for the covariates in the data points
+bath_on_mesh <- (t(A) %*% covs) / colSums(A) # get the covariate values on mesh
+# The problem is that I don't understood how to include the bath_on_mesh data on the inlabru call
+bath(fm_evaluate(fm_evaluator(mesh, loc=.data.), field = bath_on_mesh), model="linear")
+
+bath_on_mesh[is.na(bath_on_mesh[,1]),] <- 0
+
+proj <- fm_evaluator(mesh, loc=rbind(po.pts, pa.pts, ips))
+teste= fm_evaluate(fm_evaluator(mesh, loc=rbind(po.pts, pa.pts, ips)), field = bath_on_mesh)
+image(proj$x, proj$y, teste)
+
+
+
 # Components
 cmp <- list(
-  ~ tempmax(env.e, model = d1spde.st, main_layer = "tempmax") +
-    salinitymean(env.e, model = "linear", mean.linear = 0, prec.linear = 0.01, main_layer = "salinitymean") +
-    ph(env.e, model = "linear", mean.linear = 0, prec.linear = 0.01, main_layer = "ph") +
-    bath(env.e, model = "linear", mean.linear = 0, prec.linear = 0.01, main_layer = "bath") +
+  ~ #tempmax(env.e, model = d1spde.st, main_layer = "tempmax") +
+    #salinitymean(env.e, model = "linear", mean.linear = 0, prec.linear = 0.01, main_layer = "salinitymean") +
+    #ph(env.e, model = "linear", mean.linear = 0, prec.linear = 0.01, main_layer = "ph") +
+    bath(fm_evaluate(fm_evaluator(mesh, loc=.data.), field = bath_on_mesh), model="linear") +
+    spatial(coordinates, model = b.model, mapper = bru_mapper(mesh)) +
+    spatial_pa(coordinates, copy = "spatial", fixed = FALSE) +
+    Intercept(1)+
+    intercept_pa(1)
+)
+
+get_xy <- function(df) {
+  print(class(df))
+  cat(class(df))
+  xy <- cbind(df$x, df$y)
+  extract(env.e$bath, xy)[,1]
+}
+
+cmp <- list(
+  ~ bath(get_xy(.data.), model = "linear") +
     spatial(coordinates, model = b.model, mapper = bru_mapper(mesh)) +
     spatial_pa(coordinates, copy = "spatial", fixed = FALSE) +
     Intercept(1)+
@@ -203,7 +234,7 @@ cmp[[4]] <- update(cmp[[3]], ~ . +
 
 # Formulas
 forms <- list(
-  ~ tempmax + salinitymean + ph + bath
+  ~ bath
 )
 
 forms[[2]] <- update(forms[[1]], ~ . + windspeed)
@@ -274,7 +305,6 @@ pred.fit <- predict(m[[tm]], pxl,
                                                       update.formula(pred.f, ~ . + intercept_pa + spatial_pa)[2],
                                                       "))"))),
                       spatial = spatial,
-                      bath = bath,
                       sst = tempmax,
                       sal = salinitymean
                       # Other variables can be added...
