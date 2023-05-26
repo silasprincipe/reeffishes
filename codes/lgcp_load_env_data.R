@@ -28,7 +28,7 @@ env <- rast(c("data/env/crop_layers/tempmean.tif",
              "data/env/crop_layers/windspeed.tif"))
 
 # Put chl-a in log
-env$chlomean <- log(env$chlomean)
+#env$chlomean <- log(env$chlomean)
 
 # Get mean and SD to scale future layers
 m <- global(env, fun = mean, na.rm = T)[,1]
@@ -53,7 +53,7 @@ ssp1 <- rast(gsub(".tif", "_ssp126.tif", lays))
 
 names(ssp1) <- names(env)
 
-ssp1$chlomean <- log(ssp1$chlomean)
+#ssp1$chlomean <- log(ssp1$chlomean)
 
 ssp1 <- (ssp1 - m)/sde
 
@@ -62,7 +62,7 @@ ssp2 <- rast(gsub(".tif", "_ssp245.tif", lays))
 
 names(ssp2) <- names(env)
 
-ssp2$chlomean <- log(ssp2$chlomean)
+#ssp2$chlomean <- log(ssp2$chlomean)
 
 ssp2 <- (ssp2 - m)/sde
 
@@ -71,7 +71,7 @@ ssp3 <- rast(gsub(".tif", "_ssp370.tif", lays))
 
 names(ssp3) <- names(env)
 
-ssp3$chlomean <- log(ssp3$chlomean)
+#ssp3$chlomean <- log(ssp3$chlomean)
 
 ssp3 <- (ssp3 - m)/sde
 
@@ -80,7 +80,7 @@ ssp5 <- rast(gsub(".tif", "_ssp585.tif", lays))
 
 names(ssp5) <- names(env)
 
-ssp5$chlomean <- log(ssp5$chlomean)
+#ssp5$chlomean <- log(ssp5$chlomean)
 
 ssp5 <- (ssp5 - m)/sde
 
@@ -93,12 +93,13 @@ ssp5 <- (ssp5 - m)/sde
 rm(m, sde, lays)
 
 # Include bathymetry/distance to coast, if existent
-if (file.exists("data/env/ready_layers/bath_2_300.tif")) {
-  bath <- rast("data/env/ready_layers/bath_2_300.tif")
+if (file.exists("data/env/ready_layers/bath.tif")) {
+  bath <- rast("data/env/ready_layers/bath.tif")
   bath <- scale(bath)
   env.e <- c(env.e, bath)
   
   bath <- rast("data/env/bath_layers/bath_2_300.tif")
+  names(bath) <- "bath"
   bath <- mask(bath, env[[1]])
   bath <- scale(bath)
   
