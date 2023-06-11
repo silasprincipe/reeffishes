@@ -4,7 +4,8 @@
 ### Reef fishes data download and cleaning ###
 # We also aggregate the data from bibliographic sources
 
-# Download in 2021-10-19
+# First download in 2021-10-19 (YMD)
+# Last download in 2023-06-07
 
 # Load packages ----
 library(tidyverse)
@@ -23,36 +24,15 @@ sp.list <- c("Acanthurus chirurgus",
              "Scarus zelindae",
              "Sparisoma amplum",
              "Lutjanus jocu",
-             "Mycteroperca bonaci")
+             "Mycteroperca bonaci",
+             "Halichoeres radiatus",
+             "Bodianus rufus")
 
 # Create a unique code for each species
 sp.codes <- tolower(spCodes(sp.list, nchar.gen = 2, nchar.sp = 2))
 
-# Add synonims for OBIS search
-syn <- c("Acanthurus chirurgicus", # 6:8 Acanthurus chirurgus
-         "Acanthurus phlebotomus",
-         "Chaetodon chirurgus",
-         "Scarus amplus", # 9 Sparisoma amplum
-         "Anthias jocu", # 10:11 Lutjanus jocu
-         "Mesoprion litura", 
-         "Serranus arara", # 12:18 Mycteroperca bonaci
-         "Serranus bonaci",
-         "Serranus brunneus",
-         "Serranus cyclopomatus",
-         "Serranus decimalis",
-         "Serranus latepictus",
-         "Trisotropis aguaji") 
-
 # Download from OBIS
-obis.data <- lapply(c(sp.list, syn), occurrence)
-
-# Bind synonims results
-obis.data[[1]] <- bind_rows(obis.data[[1]], obis.data[6:8]) # A. chirurgus
-obis.data[[3]] <- bind_rows(obis.data[[3]], obis.data[[9]]) # S. amplum
-obis.data[[4]] <- bind_rows(obis.data[[4]], obis.data[10:11]) # L. jocu
-obis.data[[5]] <- bind_rows(obis.data[[5]], obis.data[12:18]) # M. bonaci
-
-obis.data <- obis.data[1:5]
+obis.data <- lapply(sp.list, occurrence)
 
 lapply(obis.data, nrow) # Verify number of records
 
@@ -64,18 +44,30 @@ names(obis.data) <- sp.codes
 
 # Download data | GBIF ----
 
-# Download from GBIF
+# Ensure names are matching GBIF backbone
+sp.list.gbif <- name_backbone_checklist(sp.list)
+sp.list.gbif
+
+# Download from GBIF (need to set the user key
+# see more here: https://docs.ropensci.org/rgbif/articles/getting_occurrence_data.html)
+gbif.download <- occ_download(
+  pred_in("taxonKey", sp.list.gbif$usageKey),
+  pred("hasCoordinate", TRUE),
+  format = "SIMPLE_CSV"
+) 
+
+occ_download_wait(gbif.download) # After preparing, then download
+
+gbif.get <- occ_download_get(gbif.download)
+
+gbif.dw.data <- occ_download_import(gbif.get)
 
 gbif.data <- list()
 
 for (i in 1:length(sp.list)) {
-        
-        cat("Downloading data for", sp.list[i], "\n")      
-        
-        gbif <- occ_data(scientificName = sp.list[i], hasCoordinate = T,
-                         limit = 50000)
-        gbif.data[[i]] <- as.data.frame(gbif$data)
-        rm(gbif)
+  gbif.data[[i]] <- gbif.dw.data[
+    gbif.dw.data$taxonKey == sp.list.gbif$usageKey[i],
+  ]
 }
 
 lapply(gbif.data, nrow) # Verify number of records
@@ -83,13 +75,18 @@ lapply(gbif.data, nrow) # Verify number of records
 # Add codes of species to the list to easy handling
 names(gbif.data) <- sp.codes
 
+# Delete downloaded file
+file.remove(gbif.get)
 
+# Save GBIF download metadata
+write.table(as.data.frame(unlist(attributes(gbif.download))),
+            "data/gbif_metadata.txt")
 
 
 # Data cleaning | OBIS ----
 
 # Define year, record type and area of work
-years <- as.character(c(1950:2022))
+years <- as.character(c(1950:2023))
 record <- c("HumanObservation", "Occurrence", "PreservedSpecimen")
 area <- c(-42.5, 42.5, -99, -29) #Lat 1, Lat 2, Long 1, Long 2
 
@@ -148,6 +145,20 @@ obis.data$mybo <- obis.data$mybo %>%
         filter(!is.na(institutionCode)) %>%
         filter(institutionCode != "Diveboard") #Remove Diveboard data
 
+# Halichoeres radiatus
+unique(obis.data$hara$institutionCode)
+
+obis.data$hara <- obis.data$hara %>% 
+  filter(!is.na(institutionCode)) %>%
+  filter(institutionCode != "Diveboard") #Remove Diveboard data
+
+# Bodianus rufus
+unique(obis.data$boru$institutionCode)
+
+obis.data$boru <- obis.data$boru %>% 
+  filter(!is.na(institutionCode)) %>%
+  filter(institutionCode != "Diveboard") #Remove Diveboard data
+
 
 # Optional: plot each data to verify
 plot_map_leaflet(obis.data$mybo)
@@ -179,7 +190,7 @@ points(obis.data$mybo[,c("decimalLongitude", "decimalLatitude")],
 # Data cleaning | GBIF ----
 
 # Define year, record type and area of work
-years <- as.character(c(1950:2022))
+years <- as.character(c(1950:2023))
 record <- c("HUMAN_OBSERVATION", 
             "PRESERVED_SPECIMEN", 
             "MACHINE_OBSERVATION",
@@ -194,8 +205,7 @@ gbif.data <- lapply(gbif.data, function(x){
                 filter(decimalLatitude >= area[1] & 
                                decimalLatitude <= area[2]) %>%
                 filter(decimalLongitude >= area[3] & 
-                               decimalLongitude <= area[4]) %>%
-                dplyr::select(-networkKeys)
+                               decimalLongitude <= area[4])
 })
 
 lapply(gbif.data, nrow)
@@ -209,7 +219,7 @@ unique(gbif.data$acch$institutionCode)
 gbif.data$acch <- gbif.data$acch %>% 
         filter(!is.na(institutionCode)) %>%
         filter(!institutionCode %in% c("iNaturalist", "Diveboard",
-                                       "naturgucker", "NO DISPONIBLE"))
+                                       "naturgucker", "NO DISPONIBLE", ""))
 
 # S. zelindae
 unique(gbif.data$scze$institutionCode)
@@ -233,7 +243,7 @@ unique(gbif.data$lujo$institutionCode)
 gbif.data$lujo <- gbif.data$lujo %>% 
         filter(!is.na(institutionCode)) %>%
         filter(!institutionCode %in% c("iNaturalist", "Diveboard",
-                                       "NO DISPONIBLE", "naturgucker"))
+                                       "NO DISPONIBLE", "naturgucker", ""))
 
 # M. bonaci
 unique(gbif.data$mybo$institutionCode)
@@ -241,7 +251,23 @@ unique(gbif.data$mybo$institutionCode)
 gbif.data$mybo <- gbif.data$mybo %>% 
         filter(!is.na(institutionCode)) %>%
         filter(!institutionCode %in% c("iNaturalist", "Diveboard",
-                                       "NO DISPONIBLE", "SEAK"))
+                                       "NO DISPONIBLE", "SEAK", ""))
+
+# H. radiatus
+unique(gbif.data$hara$institutionCode)
+
+gbif.data$hara <- gbif.data$hara %>% 
+  filter(!is.na(institutionCode)) %>%
+  filter(!institutionCode %in% c("iNaturalist", "Diveboard",
+                                 "NO DISPONIBLE", "SEAK", ""))
+
+# B. rufus
+unique(gbif.data$boru$institutionCode)
+
+gbif.data$boru <- gbif.data$boru %>% 
+  filter(!is.na(institutionCode)) %>%
+  filter(!institutionCode %in% c("iNaturalist", "Diveboard",
+                                 "NO DISPONIBLE", "SEAK", "", "naturgucker"))
 
 
 
@@ -457,19 +483,23 @@ padata <- padata %>%
     scze = ifelse(Species == "Scarus zelindae", 1, 0),
     spam = ifelse(Species == "Sparisoma amplum", 1, 0),
     lujo = ifelse(Species == "Lutjanus jocu", 1, 0),
-    mybo = ifelse(Species == "Mycteroperca bonaci", 1, 0)
+    mybo = ifelse(Species == "Mycteroperca bonaci", 1, 0),
+    hara = ifelse(Species == "Halichoeres radiatus", 1, 0),
+    boru = ifelse(Species == "Bodianus rufus", 1, 0)
   ) %>%
   group_by(Longitude, Latitude) %>%
   summarise(acch = sum(acch),
             scze = sum(scze),
             spam = sum(spam),
             lujo = sum(lujo),
-            mybo = sum(mybo)) %>%
+            mybo = sum(mybo),
+            hara = sum(hara),
+            boru = sum(boru)) %>%
   filter(Latitude >= area[1] & Latitude <= area[2]) %>%
   filter(Longitude >= area[3] & Longitude <= area[4])
 
 # Assign only presence/absence
-padata[,3:7] <- apply(padata[,3:7], 2, function(x){ifelse(x > 0, 1, 0)})
+padata[,3:9] <- apply(padata[,3:9], 2, function(x){ifelse(x > 0, 1, 0)})
 
 # Now we work with the Quimbayo dataset
 quim <- quim %>%
@@ -478,19 +508,23 @@ quim <- quim %>%
     scze = ifelse(species == "scarus_zelindae", 1, 0),
     spam = ifelse(species == "sparisoma_amplum", 1, 0),
     lujo = ifelse(species == "lutjanus_jocu", 1, 0),
-    mybo = ifelse(species == "mycteroperca_bonaci", 1, 0)
+    mybo = ifelse(species == "mycteroperca_bonaci", 1, 0),
+    hara = ifelse(species == "halichoeres_radiatus", 1, 0),
+    boru = ifelse(species == "bodianus_rufus", 1, 0)
   ) %>%
   group_by(lon, lat) %>%
   summarise(acch = sum(acch),
             scze = sum(scze),
             spam = sum(spam),
             lujo = sum(lujo),
-            mybo = sum(mybo)) %>%
+            mybo = sum(mybo),
+            hara = sum(hara),
+            boru = sum(boru)) %>%
   filter(lat >= area[1] & lat <= area[2]) %>%
   filter(lon >= area[3] & lon <= area[4])
 
 # Assign only presence/absence
-quim[,3:7] <- apply(quim[,3:7], 2, function(x){ifelse(x > 0, 1, 0)})
+quim[,3:9] <- apply(quim[,3:9], 2, function(x){ifelse(x > 0, 1, 0)})
 
 # Now we change colnames to standardize
 colnames(quim) <- colnames(padata)
@@ -498,7 +532,7 @@ colnames(quim) <- colnames(padata)
 # Include dataset with data from the bibliographic sources
 lit <- lit %>%
   dplyr::select(decimalLongitude, decimalLatitude,
-                acch, scze, spam, lujo, mybo) %>%
+                acch, scze, spam, lujo, mybo, hara, boru) %>%
   filter(decimalLatitude >= area[1] & decimalLatitude <= area[2]) %>%
   filter(decimalLongitude >= area[3] & decimalLongitude <= area[4])
 
@@ -534,6 +568,5 @@ for (i in 1:length(sp.codes)) {
                            sp.codes[i], "_pa.csv"), row.names = F)
   rm(pasel)
 }
-
 
 #END of code

@@ -1,23 +1,23 @@
-mybo,lujo,acch,scze,spam,LatH,LatM,LatS,Dir,decimalLatitude,LonH,LonM,LonS,Dir,decimalLongitude,Nome local,Title,DOI
-0,1,1,0,0,11,7,,N,11.11666667,74,31,,W,-74.51666667,Banco de las Ánimas,"Notes on the reproduction, morphology and ecology of Pareques acuminatus (Teleostei: Sciaenidae), in the region of Santa Marta, Colombian Caribbean",10.15446/abc.v25n3.78602
-0,0,0,0,0,11,21,,N,11.35,74,24,,W,-74.4,Playa Blanca,"Notes on the reproduction, morphology and ecology of Pareques acuminatus (Teleostei: Sciaenidae), in the region of Santa Marta, Colombian Caribbean",10.15446/abc.v25n3.78603
-0,0,0,0,0,11,26,,N,11.43333333,74,20,,W,-74.33333333,Taganga,"Notes on the reproduction, morphology and ecology of Pareques acuminatus (Teleostei: Sciaenidae), in the region of Santa Marta, Colombian Caribbean",10.15446/abc.v25n3.78604
-0,0,0,0,0,11,29,,N,11.48333333,74,19,,W,-74.31666667,Granate,"Notes on the reproduction, morphology and ecology of Pareques acuminatus (Teleostei: Sciaenidae), in the region of Santa Marta, Colombian Caribbean",10.15446/abc.v25n3.78605
-0,0,0,0,0,11,31,,N,11.51666667,74,20,,W,-74.33333333,Isla Aguja,"Notes on the reproduction, morphology and ecology of Pareques acuminatus (Teleostei: Sciaenidae), in the region of Santa Marta, Colombian Caribbean",10.15446/abc.v25n3.78606
-1,1,1,1,0,3,34,44.94,S,-3.57915,38,22,59.34,W,-38.38315,,Composition and structure of the ichthyofauna in a marine protected area in the western equatorial Atlantic: A baseline to support conservation management,10.1016/j.rsma.2018.100488
-1,0,NA,0,0,25,44,,S,-25.73333333,48,22,,W,-48.36666667,Currais,Rocky reef fish assemblage structure in coastal islands of southern Brazil,10.3856/vol46-issue1-fulltext-19
-0,0,NA,0,1,25,50,,S,-25.83333333,48,24,,W,-48.4,Itacolomis,Rocky reef fish assemblage structure in coastal islands of southern Brazil,10.3856/vol46-issue1-fulltext-20
-1,0,NA,0,1,26,10,,S,-26.16666667,48,29,,W,-48.48333333,Graças,Rocky reef fish assemblage structure in coastal islands of southern Brazil,10.3856/vol46-issue1-fulltext-21
-0,0,0,0,0,22,57,,S,-22.95,43,9,,W,-43.15,,"The rocky reef fishes of Vermelha Beach, a marine-estuarine transitional zone at Guanabara Bay, Brazil",10.3856/vol45-issue1-fulltext-4
-1,1,1,0,0,20,21,,N,20.35,91,98,,W,-92.63333333,Cayo Arcas,"The fishes of Cayo Arcas (Campeche Bank, Gulf of Mexico): an updated checklist",10.3897/zookeys.640.10862
-0,0,0,0,0,11,14,,N,11.23333333,74,14,,W,-74.23333333,Morro,"Reef fish community in presence of the lionfish (Pterois volitans) in Santa Marta, Colombian Caribbean",10.21897/rmvz.13
-0,0,1,0,0,11,16,,N,11.26666667,74,12,,W,-74.2,Remanso,"Reef fish community in presence of the lionfish (Pterois volitans) in Santa Marta, Colombian Caribbean",10.21897/rmvz.14
-0,0,1,0,0,11,19,,N,11.31666667,74,12,,W,-74.2,Isla Aguja,"Reef fish community in presence of the lionfish (Pterois volitans) in Santa Marta, Colombian Caribbean",10.21897/rmvz.15
-0,0,0,0,0,11,19,,N,11.31666667,74,8,,W,-74.13333333,Chengue,"Reef fish community in presence of the lionfish (Pterois volitans) in Santa Marta, Colombian Caribbean",10.21897/rmvz.16
-0,0,1,0,0,11,20,,N,11.33333333,74,3,,W,-74.05,Cinto,"Reef fish community in presence of the lionfish (Pterois volitans) in Santa Marta, Colombian Caribbean",10.21897/rmvz.17
-0,0,0,0,1,20,30,,S,-20.5,29,20,,W,-29.33333333,,Reef fish structure and distribution in a south-western Atlantic Ocean tropical island,10.1111/j.1095-8649.2011.03138.x
-0,1,1,0,1,3,50,,S,-3.833333333,32,25,,W,-32.41666667,,Nested sampling: an improved visual-census technique for studying reef fish assemblages,10.3354/meps07511
-1,0,1,1,1,24,15,,S,-24.25,46,10,,W,-46.16666667,Laje de Santos,"The reef fish assemblage of the Laje de Santos Marine State Park, Southwestern Atlantic: annotated checklist with comments on abundance, distribution, trophic structure, symbiotic associations, and conservation",https://www.biotaxa.org/Zootaxa/article/view/zootaxa.1807.1.1
-0,0,1,0,NA,7,6,15,S,-7.104166667,34,48,45,W,-34.8125,,Effects of tourist visitation and supplementary feeding on fish assemblage composition on a tropical reef in the Southwestern Atlantic,10.1590/S1679-62252008000400014
-0,0,1,0,0,23,44,,S,-23.73333333,42,0,,W,-42,,"Influence of Palythoa caribaeorum (Anthozoa, Cnidaria) zonation on site-attached reef fishes",10.1590/S0001-37652008000300010
-1,0,0,NA,0,20,30,,S,-20.5,29,20,,W,-29.33333333,,"The shore fishes of Trindade Island, western south Atlantic",10.1080/002229301317092379
+mybo,lujo,acch,scze,spam,hara,boru,LatH,LatM,LatS,Dir,decimalLatitude,LonH,LonM,LonS,Dir,decimalLongitude,Nome local,Title,DOI
+0,1,1,0,0,0,1,11,7,,N,11.11666667,74,31,,W,-74.51666667,Banco de las Ánimas,"Notes on the reproduction, morphology and ecology of Pareques acuminatus (Teleostei: Sciaenidae), in the region of Santa Marta, Colombian Caribbean",10.15446/abc.v25n3.78602
+0,0,0,0,0,0,1,11,21,,N,11.35,74,24,,W,-74.4,Playa Blanca,"Notes on the reproduction, morphology and ecology of Pareques acuminatus (Teleostei: Sciaenidae), in the region of Santa Marta, Colombian Caribbean",10.15446/abc.v25n3.78603
+0,0,0,0,0,0,0,11,26,,N,11.43333333,74,20,,W,-74.33333333,Taganga,"Notes on the reproduction, morphology and ecology of Pareques acuminatus (Teleostei: Sciaenidae), in the region of Santa Marta, Colombian Caribbean",10.15446/abc.v25n3.78604
+0,0,0,0,0,0,1,11,29,,N,11.48333333,74,19,,W,-74.31666667,Granate,"Notes on the reproduction, morphology and ecology of Pareques acuminatus (Teleostei: Sciaenidae), in the region of Santa Marta, Colombian Caribbean",10.15446/abc.v25n3.78605
+0,0,0,0,0,0,1,11,31,,N,11.51666667,74,20,,W,-74.33333333,Isla Aguja,"Notes on the reproduction, morphology and ecology of Pareques acuminatus (Teleostei: Sciaenidae), in the region of Santa Marta, Colombian Caribbean",10.15446/abc.v25n3.78606
+1,1,1,1,0,1,1,3,34,44.94,S,-3.57915,38,22,59.34,W,-38.38315,,Composition and structure of the ichthyofauna in a marine protected area in the western equatorial Atlantic: A baseline to support conservation management,10.1016/j.rsma.2018.100488
+1,0,NA,0,0,0,0,25,44,,S,-25.73333333,48,22,,W,-48.36666667,Currais,Rocky reef fish assemblage structure in coastal islands of southern Brazil,10.3856/vol46-issue1-fulltext-19
+0,0,NA,0,1,0,1,25,50,,S,-25.83333333,48,24,,W,-48.4,Itacolomis,Rocky reef fish assemblage structure in coastal islands of southern Brazil,10.3856/vol46-issue1-fulltext-19
+1,0,NA,0,1,0,0,26,10,,S,-26.16666667,48,29,,W,-48.48333333,Graças,Rocky reef fish assemblage structure in coastal islands of southern Brazil,10.3856/vol46-issue1-fulltext-19
+0,0,0,0,0,0,0,22,57,,S,-22.95,43,9,,W,-43.15,,"The rocky reef fishes of Vermelha Beach, a marine-estuarine transitional zone at Guanabara Bay, Brazil",10.3856/vol45-issue1-fulltext-4
+1,1,1,0,0,1,1,20,21,,N,20.35,91,98,,W,-92.63333333,Cayo Arcas,"The fishes of Cayo Arcas (Campeche Bank, Gulf of Mexico): an updated checklist",10.3897/zookeys.640.10862
+0,0,0,0,0,0,1,11,14,,N,11.23333333,74,14,,W,-74.23333333,Morro,"Reef fish community in presence of the lionfish (Pterois volitans) in Santa Marta, Colombian Caribbean",10.21897/rmvz.13
+0,0,1,0,0,0,1,11,16,,N,11.26666667,74,12,,W,-74.2,Remanso,"Reef fish community in presence of the lionfish (Pterois volitans) in Santa Marta, Colombian Caribbean",10.21897/rmvz.14
+0,0,1,0,0,0,1,11,19,,N,11.31666667,74,12,,W,-74.2,Isla Aguja,"Reef fish community in presence of the lionfish (Pterois volitans) in Santa Marta, Colombian Caribbean",10.21897/rmvz.15
+0,0,0,0,0,0,1,11,19,,N,11.31666667,74,8,,W,-74.13333333,Chengue,"Reef fish community in presence of the lionfish (Pterois volitans) in Santa Marta, Colombian Caribbean",10.21897/rmvz.16
+0,0,1,0,0,0,1,11,20,,N,11.33333333,74,3,,W,-74.05,Cinto,"Reef fish community in presence of the lionfish (Pterois volitans) in Santa Marta, Colombian Caribbean",10.21897/rmvz.17
+0,0,0,0,1,0,1,20,30,,S,-20.5,29,20,,W,-29.33333333,,Reef fish structure and distribution in a south-western Atlantic Ocean tropical island,10.1111/j.1095-8649.2011.03138.x
+0,1,1,0,1,1,0,3,50,,S,-3.833333333,32,25,,W,-32.41666667,,Nested sampling: an improved visual-census technique for studying reef fish assemblages,10.3354/meps07511
+1,0,1,1,1,0,1,24,15,,S,-24.25,46,10,,W,-46.16666667,Laje de Santos,"The reef fish assemblage of the Laje de Santos Marine State Park, Southwestern Atlantic: annotated checklist with comments on abundance, distribution, trophic structure, symbiotic associations, and conservation",https://www.biotaxa.org/Zootaxa/article/view/zootaxa.1807.1.1
+0,0,1,0,NA,0,0,7,6,15,S,-7.104166667,34,48,45,W,-34.8125,,Effects of tourist visitation and supplementary feeding on fish assemblage composition on a tropical reef in the Southwestern Atlantic,10.1590/S1679-62252008000400014
+0,0,1,0,0,0,0,23,44,,S,-23.73333333,42,0,,W,-42,,"Influence of Palythoa caribaeorum (Anthozoa, Cnidaria) zonation on site-attached reef fishes",10.1590/S0001-37652008000300010
+1,0,0,NA,0,0,1,20,30,,S,-20.5,29,20,,W,-29.33333333,,"The shore fishes of Trindade Island, western south Atlantic",10.1080/002229301317092379

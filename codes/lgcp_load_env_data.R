@@ -95,7 +95,6 @@ rm(m, sde, lays)
 # Include bathymetry/distance to coast, if existent
 if (file.exists("data/env/ready_layers/bath.tif")) {
   bath <- rast("data/env/ready_layers/bath.tif")
-  bath <- scale(bath)
   env.e <- c(env.e, bath)
   
   bath <- rast("data/env/bath_layers/bath_2_300.tif")
@@ -113,7 +112,6 @@ if (file.exists("data/env/ready_layers/bath.tif")) {
 
 if (file.exists("data/env/ready_layers/distcoast.tif")) {
   distc <- rast("data/env/ready_layers/distcoast.tif")
-  distc <- scale(distc)
   env.e <- c(env.e, distc)
   
   distc <- rast("data/env/crop_layers/distcoast.tif")
