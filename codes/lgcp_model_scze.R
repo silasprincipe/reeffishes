@@ -169,7 +169,7 @@ plot.bmodel(po.pts@coords[10,1:2], mesh = mesh, spde = b.model,
 # The 1D SPDE acts similar to a GAM spline, fitting a [possible] non-linear
 # relation. It's similar also to a "rw2" model (smoother than the "rw1"),
 # but have as advantage that you don't need to group the values prior to fitting.
-knots.st <- seq((minmax(env.e$tempmax)[1]-0.05), (minmax(ssp5$tempmax)[2]+0.05),
+knots.st <- seq((minmax(env.e$tempmean)[1]-0.05), (minmax(ssp5$tempmean)[2]+0.05),
                 length = 25)
 d1mesh.st <- inla.mesh.1d(knots.st, degree = 2,
                           boundary = "free")
@@ -180,10 +180,10 @@ d1spde.st <- inla.spde2.pcmatern(d1mesh.st,
                                  constr = T)
 
 # If you want to compare to the Random-walk of order 2 just uncoment:
-# env.e$tempmax <- inla.group(env.e$tempmax, n = 30)
+# env.e$tempmean <- inla.group(env.e$tempmean, n = 30)
 # sst.prior <- list(prior = "pcprec", param = c(1, 0.01))
 # And use the following line in the components, instead of the d1spde.st
-# tempmax(env.e, model = "rw1", hyper = list(prec = sst.prior), main_layer = "tempmax") +
+# tempmean(env.e, model = "rw1", hyper = list(prec = sst.prior), main_layer = "tempmean") +
 
 
 
@@ -200,7 +200,7 @@ d1spde.st <- inla.spde2.pcmatern(d1mesh.st,
 
 # Components
 cmp <- list(
-  ~ tempmax(env.e, model = d1spde.st, main_layer = "tempmax") +
+  ~ tempmean(env.e, model = d1spde.st, main_layer = "tempmean") +
     salinitymean(env.e, model = "linear", mean.linear = 0, prec.linear = 0.01, main_layer = "salinitymean") +
     ph(env.e, model = "linear", mean.linear = 0, prec.linear = 0.01, main_layer = "ph") +
     distcoast(env.e, model = "linear", mean.linear = 0, prec.linear = 0.01, main_layer = "distcoast") +
@@ -220,7 +220,7 @@ cmp[[4]] <- update(cmp[[3]], ~ . +
 
 # Formulas
 forms <- list(
-  ~ tempmax + salinitymean + ph + distcoast
+  ~ tempmean + salinitymean + ph + distcoast
 )
 
 forms[[2]] <- update(forms[[1]], ~ . + windspeed)
@@ -277,7 +277,7 @@ summary(m[[tm]])
 exp(m[[tm]]$summary.hyperpar[2:3,])
 
 # Predict to view
-pxl <- as(raster::raster("data/env/crop_layers/tempmax.tif"),
+pxl <- as(raster::raster("data/env/crop_layers/tempmean.tif"),
           "SpatialPixelsDataFrame")
 
 pred.f <- forms[[tm]] 
@@ -292,7 +292,7 @@ pred.fit <- predict(m[[tm]], pxl,
                                                     update.formula(pred.f, ~ . + intercept_pa + spatial_pa)[2],
                                                     "))"))),
                       spatial = spatial,
-                      sst = tempmax,
+                      sst = tempmean,
                       sal = salinitymean
                       # Other variables can be added...
                     ))
@@ -324,7 +324,7 @@ pred.lamb <- predict(m[[tm]], ips,
 # just a subset to save time.
 
 # Chose the subset to be CV
-cv.m <- 1:3
+cv.m <- 3
 
 # Prepare CV data
 # Get spatial blocks
@@ -599,7 +599,7 @@ delta.metrics(metrics.cv, all = c("dss", "block_dss", "block_rmse"))
 
 # Predict models ----
 # After analyzing models and the cross-validation metrics we chose model:
-smodel <- 1
+smodel <- 3
 # Now we get predictions for this model
 
 # Remove unused objects to ensure predictions go smoothly
@@ -622,10 +622,10 @@ for (ps in predset) {
   if (ps == "clamp") {
     
     # Before clamping, we save the maximum value of temperature on the ssp5
-    temp.max.val <- terra::global(ssp5$tempmax, "max", na.rm = T)
+    temp.max.val <- terra::global(ssp5$tempmean, "max", na.rm = T)
     
-    env.e <- rast(c("data/env/ready_layers/tempmax.tif",
-                    "data/env/ready_layers/tempmax.tif",
+    env.e <- rast(c("data/env/ready_layers/tempmean.tif",
+                    "data/env/ready_layers/tempmean.tif",
                     "data/env/ready_layers/salinitymean.tif",
                     "data/env/ready_layers/chlomean.tif",
                     "data/env/ready_layers/silicatemax.tif",
@@ -868,9 +868,10 @@ plots <- list()
 # x label titles
 xl <- c(
   Intercept = "Intercept", intercept_pa = "Intercept Presence-Absence",
-  ph = "Mean pH", tempmax = "Maximum SST", chlomean = "Mean log(Chl-a)",
-  silicatemax = "Maximum silicate", windspeed = "Mean windspeed",
-  salinitymean = "Mean salinity"
+  ph = "Mean pH", tempmean = "Mean SST", tempmax = "Maximum SST",
+  chlomean = "Mean Chl-a", silicatemax = "Maximum silicate",
+  windspeed = "Mean windspeed", salinitymean = "Mean salinity",
+  distcoast = "Distance to coast"
 )
 xl <- xl[grep(paste0(m[[smodel]]$names.fixed, collapse = "|"), names(xl))]
 
@@ -882,7 +883,7 @@ for (i in 1:length(m[[smodel]]$names.fixed)) {
 }
 
 pl <- eval(parse(text = paste("plots[[", 1:length(plots), "]]", collapse = "+")))
-ggsave(paste0(dir, "/effects_density.jpg"), pl, quality = 100)
+ggsave(paste0(dir, "/effects_density.jpg"), pl, quality = 100, width = 10, height = 6)
 
 # Get plots of probability density for the SPDE parameters
 sigp <- ggplot(data.frame(
@@ -902,15 +903,16 @@ sstp <- ggplot(data.frame(
   aes(x, y)) + geom_line() + xlab("SD(SST)") + ylab("") + theme_classic()
 
 sigp + rangep + sstp
-ggsave(paste0(dir, "/hyperpar_density.jpg"), height = 3, quality = 100)
+ggsave(paste0(dir, "/hyperpar_density.jpg"), quality = 100,
+       width = 10, height = 3)
 
 # Save plot of the temperature component
 ssteval <- predict(m[[smodel]],
                    NULL,
-                   ~ tempmax_eval(seq(minmax(env$tempmax)[1], minmax(env$tempmax)[2], by = 0.1)),
+                   ~ tempmean_eval(seq(minmax(env$tempmean)[1], minmax(env$tempmean)[2], by = 0.1)),
                    nsamples = 1000)
 
-ssteval$x <- seq(minmax(env$tempmax)[1], minmax(env$tempmax)[2], by = 0.1)
+ssteval$x <- seq(minmax(env$tempmean)[1], minmax(env$tempmean)[2], by = 0.1)
 
 (p <- ggplot(ssteval) +
     geom_line(aes(x = x, y = mean)) +
@@ -918,18 +920,18 @@ ssteval$x <- seq(minmax(env$tempmax)[1], minmax(env$tempmax)[2], by = 0.1)
     geom_hline(yintercept = 0, linetype = "dashed")+
     geom_ribbon(aes(x = x, ymin = q0.025, ymax = q0.975), alpha = .4) +
     scale_x_continuous(expand = c(0,0))+
-    spatt + ylab("Mean effect") + xlab("Maximum SST"))
-ggsave(paste0(dir, "/sst_effect.jpg"), quality = 100)
+    spatt + ylab("Mean effect") + xlab("Mean SST"))
+ggsave(paste0(dir, "/sst_effect.jpg"), quality = 100, width = 10, height = 6)
 
 if (savenoclamp) {
   extvals <- c(
-    seq(minmax(env$tempmax)[1], minmax(env$tempmax)[2], length.out = 100),
-    seq(minmax(env$tempmax)[2], temp.max.val$max+1, by = 0.1)
+    seq(minmax(env$tempmean)[1], minmax(env$tempmean)[2], length.out = 100),
+    seq(minmax(env$tempmean)[2], temp.max.val$max+1, by = 0.1)
   )
   
   sstext <- predict(m[[smodel]],
                     NULL,
-                    ~ tempmax_eval(extvals), nsamples = 1000)
+                    ~ tempmean_eval(extvals), nsamples = 1000)
   sstext$class <- c(rep("True values", 100), rep("Extrapolation", nrow(sstext)-100))
   sstext$x <- extvals
   
@@ -941,22 +943,22 @@ if (savenoclamp) {
                  color = "red", linetype = "dashed")+
       geom_ribbon(aes(x = x, ymin = q0.025, ymax = q0.975, fill = class), alpha = .4) +
       scale_x_continuous(expand = c(0,0))+
-      spatt + ylab("Mean effect") + xlab("Maximum SST")) + theme(legend.title = element_blank())
-  ggsave(paste0(dir, "/sst_effect_extrapolation.jpg"), quality = 100)
+      spatt + ylab("Mean effect") + xlab("Mean SST")) + theme(legend.title = element_blank())
+  ggsave(paste0(dir, "/sst_effect_extrapolation.jpg"), quality = 100, width = 10, height = 6)
 }
 
 # Save response curves
 resp.curves <- get.resp.curves(m[[smodel]], forms[[smodel]], mode = NULL, samp = 1000)
 plot(resp.curves)
-ggsave(paste0(dir, "/resp_curves_lin.jpg"), quality = 100)
+ggsave(paste0(dir, "/resp_curves_lin.jpg"), quality = 100, width = 8, height = 4)
 
 resp.curves <- get.resp.curves(m[[smodel]], forms[[smodel]], mode = "exp", samp = 1000)
 plot(resp.curves)
-ggsave(paste0(dir, "/resp_curves_exp.jpg"), quality = 100)
+ggsave(paste0(dir, "/resp_curves_exp.jpg"), quality = 100, width = 8, height = 4)
 
 resp.curves <- get.resp.curves(m[[smodel]], forms[[smodel]], mode = "cloglog", samp = 1000)
 plot(resp.curves)
-ggsave(paste0(dir, "/resp_curves_pa.jpg"), quality = 100)
+ggsave(paste0(dir, "/resp_curves_pa.jpg"), quality = 100, width = 8, height = 4)
 
 
 

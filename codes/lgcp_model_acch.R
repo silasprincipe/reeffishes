@@ -324,7 +324,7 @@ pred.lamb <- predict(m[[tm]], ips,
 # just a subset to save time.
 
 # Chose the subset to be CV
-cv.m <- 1:3
+cv.m <- 3:4
 
 # Prepare CV data
 # Get spatial blocks
@@ -599,7 +599,7 @@ delta.metrics(metrics.cv, all = c("dss", "block_dss", "block_rmse"))
 
 # Predict models ----
 # After analyzing models and the cross-validation metrics we chose model:
-smodel <- 1
+smodel <- 3
 # Now we get predictions for this model
 
 # Remove unused objects to ensure predictions go smoothly
@@ -868,9 +868,10 @@ plots <- list()
 # x label titles
 xl <- c(
   Intercept = "Intercept", intercept_pa = "Intercept Presence-Absence",
-  ph = "Mean pH", tempmean = "Maximum SST", chlomean = "Mean log(Chl-a)",
-  silicatemax = "Maximum silicate", windspeed = "Mean windspeed",
-  salinitymean = "Mean salinity"
+  ph = "Mean pH", tempmean = "Mean SST", tempmax = "Maximum SST",
+  chlomean = "Mean Chl-a", silicatemax = "Maximum silicate",
+  windspeed = "Mean windspeed", salinitymean = "Mean salinity",
+  distcoast = "Distance to coast"
 )
 xl <- xl[grep(paste0(m[[smodel]]$names.fixed, collapse = "|"), names(xl))]
 
@@ -882,7 +883,7 @@ for (i in 1:length(m[[smodel]]$names.fixed)) {
 }
 
 pl <- eval(parse(text = paste("plots[[", 1:length(plots), "]]", collapse = "+")))
-ggsave(paste0(dir, "/effects_density.jpg"), pl, quality = 100)
+ggsave(paste0(dir, "/effects_density.jpg"), pl, quality = 100, width = 10, height = 6)
 
 # Get plots of probability density for the SPDE parameters
 sigp <- ggplot(data.frame(
@@ -902,7 +903,8 @@ sstp <- ggplot(data.frame(
   aes(x, y)) + geom_line() + xlab("SD(SST)") + ylab("") + theme_classic()
 
 sigp + rangep + sstp
-ggsave(paste0(dir, "/hyperpar_density.jpg"), height = 3, quality = 100)
+ggsave(paste0(dir, "/hyperpar_density.jpg"), quality = 100,
+       width = 10, height = 3)
 
 # Save plot of the temperature component
 ssteval <- predict(m[[smodel]],
@@ -918,8 +920,8 @@ ssteval$x <- seq(minmax(env$tempmean)[1], minmax(env$tempmean)[2], by = 0.1)
     geom_hline(yintercept = 0, linetype = "dashed")+
     geom_ribbon(aes(x = x, ymin = q0.025, ymax = q0.975), alpha = .4) +
     scale_x_continuous(expand = c(0,0))+
-    spatt + ylab("Mean effect") + xlab("Maximum SST"))
-ggsave(paste0(dir, "/sst_effect.jpg"), quality = 100)
+    spatt + ylab("Mean effect") + xlab("Mean SST"))
+ggsave(paste0(dir, "/sst_effect.jpg"), quality = 100, width = 10, height = 6)
 
 if (savenoclamp) {
   extvals <- c(
@@ -941,22 +943,22 @@ if (savenoclamp) {
                  color = "red", linetype = "dashed")+
       geom_ribbon(aes(x = x, ymin = q0.025, ymax = q0.975, fill = class), alpha = .4) +
       scale_x_continuous(expand = c(0,0))+
-      spatt + ylab("Mean effect") + xlab("Maximum SST")) + theme(legend.title = element_blank())
-  ggsave(paste0(dir, "/sst_effect_extrapolation.jpg"), quality = 100)
+      spatt + ylab("Mean effect") + xlab("Mean SST")) + theme(legend.title = element_blank())
+  ggsave(paste0(dir, "/sst_effect_extrapolation.jpg"), quality = 100, width = 10, height = 6)
 }
 
 # Save response curves
 resp.curves <- get.resp.curves(m[[smodel]], forms[[smodel]], mode = NULL, samp = 1000)
 plot(resp.curves)
-ggsave(paste0(dir, "/resp_curves_lin.jpg"), quality = 100)
+ggsave(paste0(dir, "/resp_curves_lin.jpg"), quality = 100, width = 8, height = 4)
 
 resp.curves <- get.resp.curves(m[[smodel]], forms[[smodel]], mode = "exp", samp = 1000)
 plot(resp.curves)
-ggsave(paste0(dir, "/resp_curves_exp.jpg"), quality = 100)
+ggsave(paste0(dir, "/resp_curves_exp.jpg"), quality = 100, width = 8, height = 4)
 
 resp.curves <- get.resp.curves(m[[smodel]], forms[[smodel]], mode = "cloglog", samp = 1000)
 plot(resp.curves)
-ggsave(paste0(dir, "/resp_curves_pa.jpg"), quality = 100)
+ggsave(paste0(dir, "/resp_curves_pa.jpg"), quality = 100, width = 8, height = 4)
 
 
 
