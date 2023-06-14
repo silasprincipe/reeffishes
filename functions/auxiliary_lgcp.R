@@ -199,7 +199,7 @@ delta.metrics <- function(df, metric, all = F){
     
     for (i in metrics) {
       
-      if (grepl("auc", i)) {
+      if (grepl("auc", i) | grepl("tss", i) | grepl("boyce", i)) {
         dec = TRUE
       } else{
         dec = FALSE

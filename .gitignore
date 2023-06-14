@@ -48,6 +48,10 @@ po/*~
 # RStudio Connect folder
 rsconnect/
 
+# No clamping versions
+*_noclamp_*
+.DS_Store
+
 # Folders with large environmental data
 /data/env/*
 !/data/env/crop_layers

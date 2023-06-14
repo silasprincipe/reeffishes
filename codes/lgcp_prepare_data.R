@@ -30,15 +30,20 @@ starea <- calc(starea, function(x){x[!is.na(x)] <- 1; x})
 starea <- rasterToPolygons(starea, dissolve = T)
 
 # Simplify study area
-starea <- gSimplify(gBuffer(starea, width=0.5), tol=0.5);plot(starea)
+starea <- gSimplify(gBuffer(starea, width=0.1), tol=0.1);plot(starea)
 
+# Get an outer bound that cover the whole study area
+starea.pts <- rasterToPoints(raster("data/env/crop_layers/tempmean.tif"))
+outer.bound <- inla.nonconvex.hull(starea.pts,
+                                   convex = -0.05)
+lines(outer.bound) # Plot to see
 
 
 # Prepare INLA mesh ----
 mesh <- inla.mesh.2d(
-  boundary = starea,
-  max.edge = c(2, 4),
-  cutoff = 0.8,
+  boundary = list(starea, outer.bound),
+  max.edge = c(1, 2.5),
+  cutoff = 0.1,
   crs = crs(starea),
   offset = c(0.1, 6)
 )
@@ -61,9 +66,15 @@ env <- stack("data/env/crop_layers/tempmean.tif",
              "data/env/crop_layers/chlomean.tif",
              "data/env/crop_layers/silicatemax.tif",
              "data/env/crop_layers/ph.tif",
-             "data/env/crop_layers/windspeed.tif")
+             "data/env/crop_layers/windspeed.tif",
+             "data/env/crop_layers/distcoast.tif",
+             "data/env/bath_layers/bath_2_300.tif")
 
-env$chlomean <- log(env$chlomean)
+names(env)[8] <- "distcoast"
+names(env)[9] <- "bath"
+env <- mask(env, env[[1]])
+
+#env$chlomean <- log(env$chlomean)
 
 env <- scale(env)
 

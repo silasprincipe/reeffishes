@@ -13,7 +13,8 @@ get.resp.curves <- function(fit, vars, mode = NULL, samp = 100,
                     "data/env/ready_layers/chlomean.tif",
                     "data/env/ready_layers/silicatemax.tif",
                     "data/env/ready_layers/ph.tif",
-                    "data/env/ready_layers/windspeed.tif"))
+                    "data/env/ready_layers/windspeed.tif",
+                    "data/env/ready_layers/distcoast.tif"))
     bvals <- rbind(extract(env.e, coordinates(ips)),
                    extract(env.e, coordinates(po.pts)),
                    extract(env.e, coordinates(pa.pts)))
